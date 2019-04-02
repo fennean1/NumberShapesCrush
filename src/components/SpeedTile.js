@@ -47,7 +47,7 @@ export default class SpeedTile extends Component<{}> {
           { transform: [{ translateX: this.props.location.x }, { translateY: this.props.location.y }, { scale: this.props.scale}] }
         ]}
 >
-<TouchableOpacity onPress = {this.onPress.bind(this)}>
+<TouchableOpacity style = {tileStyle} onPress = {this.onPress.bind(this)}>
 <Image style = {tileStyle} source = {this.props.img}/>
 </TouchableOpacity></Animated.View>
 }

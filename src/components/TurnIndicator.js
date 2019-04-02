@@ -58,7 +58,7 @@ let styles = StyleSheet.create({
     fontSize: TILE_WIDTH / 3,
     alignItems: "center",
     textAlign: "center",
-    //fontFamily: "ChalkboardSE-Regular"
+    fontFamily: "ChalkboardSE-Regular"
   },
   image: {
     width: 0.8 * TILE_WIDTH,

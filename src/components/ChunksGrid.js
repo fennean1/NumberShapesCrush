@@ -80,7 +80,9 @@ export default class ChunksGrid extends Component<{}> {
     super(props);
 
 
-    this.myLevels = [Types.BLUE,Types.RED,Types.PURPLE,Types.ORANGE,Types.PINK,Types.GREEN]
+
+    // Could use some serious refactoring..like why declare this array?
+    this.myLevels = [Types.BLUE,Types.RED,Types.PURPLE,Types.ORANGE,Types.PINK,Types.GREEN,Types.NUMERAL]
     this.cardsForThisLevel = getNumbersWithType(this.myLevels[0])
     this.blueLevel = getNumbersWithType(this.myLevels[0])
     this.redLevel = getNumbersWithType(this.myLevels[1])
@@ -88,10 +90,11 @@ export default class ChunksGrid extends Component<{}> {
     this.orangeLevel = getNumbersWithType(this.myLevels[3])
     this.pinkLevel = getNumbersWithType(this.myLevels[4])
     this.greenLevel = getNumbersWithType(this.myLevels[5])
+    this.numeralLevel = getNumbersWithType(this.myLevels[6])
 
     this.upperBound = 7
     this.lowerBound = 3
-    this.cardCue = [...this.blueLevel.slice(this.lowerBound,this.upperBound),...this.purpleLevel.slice(this.lowerBound,this.upperBound),...this.orangeLevel.slice(this.lowerBound,this.upperBound),...this.pinkLevel.slice(this.lowerBound,this.upperBound),...this.greenLevel.slice(this.lowerBound,this.upperBound)]
+    this.cardCue = [...this.redLevel.slice(this.lowerBound,this.upperBound),...this.purpleLevel.slice(this.lowerBound,this.upperBound),...this.orangeLevel.slice(this.lowerBound,this.upperBound),...this.pinkLevel.slice(this.lowerBound,this.upperBound),...this.greenLevel.slice(this.lowerBound,this.upperBound),...this.numeralLevel.slice(this.lowerBound,this.upperBound)]
     this.currentLevelIndex = 0
     // Inititalize to swipe up, will change later.
     this.swipeDirection = swipeDirections.SWIPE_UP;
@@ -122,7 +125,7 @@ export default class ChunksGrid extends Component<{}> {
 
     this.state = {
       tileComponents: [],
-      tileDataSource: this.initializeDataSource()
+      tileDataSource: []
     };
   }
 
@@ -136,13 +139,13 @@ export default class ChunksGrid extends Component<{}> {
 
   exploreAndTag(i,j) {
 
-    let value = this.state.tileDataSource[i][j].value
+    let value = this.state.tileDataSource[i][j].assetObj.value
     this.state.tileDataSource[i][j].explored = true
 
-    let rightImage = this.validIndex(i+1,j) ? this.state.tileDataSource[i+1][j].value : null
-    let leftImage = this.validIndex(i-1,j) ? this.state.tileDataSource[i-1][j].value : null
-    let topImage = this.validIndex(i,j-1) ? this.state.tileDataSource[i][j-1].value : null
-    let bottomImage = this.validIndex(i,j+1) ? this.state.tileDataSource[i][j+1].value : null
+    let rightImage = this.validIndex(i+1,j) ? this.state.tileDataSource[i+1][j].assetObj.value : null
+    let leftImage = this.validIndex(i-1,j) ? this.state.tileDataSource[i-1][j].assetObj.value : null
+    let topImage = this.validIndex(i,j-1) ? this.state.tileDataSource[i][j-1].assetObj.value : null
+    let bottomImage = this.validIndex(i,j+1) ? this.state.tileDataSource[i][j+1].assetObj.value : null
 
     if (rightImage == value && this.state.tileDataSource[i+1][j].explored == false) {
         this.exploreAndTag(i+1,j)
@@ -221,15 +224,17 @@ export default class ChunksGrid extends Component<{}> {
     }
   }
 
+  componentDidUpdate() {
+    this.animateValuesToLocationsWaterfalStyle()
+  }
+
   // data - the array of
   renderTiles() {
     if (this.firstLoad) {
       this.firstLoad = false
       this.lowerBound = this.props.currentLevel
       this.upperBound = this.props.currentLevel + 4
-      this.cardCue = [...this.blueLevel.slice(this.lowerBound,this.upperBound),...this.purpleLevel.slice(this.lowerBound,this.upperBound),...this.orangeLevel.slice(this.lowerBound,this.upperBound),...this.pinkLevel.slice(this.lowerBound,this.upperBound),...this.greenLevel.slice(this.lowerBound,this.upperBound)]
-      //this.cardCue = shuffle(this.cardCue)
-      console.log("shuffled card cue!",this.cardCue)
+      this.cardCue = [...this.blueLevel.slice(this.lowerBound,this.upperBound),...this.redLevel.slice(this.lowerBound,this.upperBound),...this.purpleLevel.slice(this.lowerBound,this.upperBound),...this.orangeLevel.slice(this.lowerBound,this.upperBound),...this.pinkLevel.slice(this.lowerBound,this.upperBound),...this.greenLevel.slice(this.lowerBound,this.upperBound)]
       this.state.tileDataSource = this.initializeDataSource()
       var components = [];
       // This creates the array of Tile components that is stored as a state variable.
@@ -241,19 +246,16 @@ export default class ChunksGrid extends Component<{}> {
             scale={e.scale}
             key={e.key}
             rotation={e.rotation}
-            img={e.image}
+            img={e.assetObj.img}
             onTouch = {this.onTouch.bind(this)}
             indices = {[i,j]}
             selected = {e.selected}
             />
           );
         });
-        // This is where the error occurs where an element no longer receives touches.
-        // Don't wrap this in a view.
         return;
         rows;
       });
-      this.animateValuesToLocationsWaterfalStyle()
       return components;
     } else {
     var components = [];
@@ -266,15 +268,13 @@ export default class ChunksGrid extends Component<{}> {
           scale={e.scale}
           key={e.key}
           rotation={e.rotation}
-          img={e.image}
+          img={e.assetObj.img}
           onTouch = {this.onTouch.bind(this)}
           indices = {[i,j]}
           selected = {e.selected}
           />
         );
       });
-      // This is where the error occurs where an element no longer receives touches.
-      // Don't wrap this in a view.
       return;
       rows;
     });
@@ -390,42 +390,6 @@ export default class ChunksGrid extends Component<{}> {
     }
   }
 
-  condenseColumns(beanIndexes) {
-
-    let spotsToFill = 0;
-    // NOTE: HARDCODED!
-    for (let i = 0; i < 5; i++) {
-      spotsToFill = 0;
-
-      // Iterate through each column
-      for (let j = 4; j >= 0; j--) {
-        // NOTE: Wait...there's only one of this. Couldn't I use "containsIndexPair?""
-        let indexesToFill = beanIndexes.filter(e => {
-          return i == e[0] && j == e[1];
-        });
-
-        // Check to see if the element is a spot that needs filling.
-        if (indexesToFill.length != 0) {
-          // Increment the spots to fill...since we found a spot to fill.
-          spotsToFill++;
-          // Place the location above the top of the screen for when it "falls"
-          this.state.tileDataSource[i][j].location.setValue({
-            x: TILE_WIDTH * i,
-            y: -3 * TILE_WIDTH
-          });
-          this.state.tileDataSource[i][j].scale.setValue(1);
-
-        } else if (spotsToFill > 0) {
-          // Move bean downward
-          const currentSpot = this.state.tileDataSource[i][j];
-          const newSpot = this.state.tileDataSource[i][j + spotsToFill];
-
-          this.state.tileDataSource[i][j] = newSpot;
-          this.state.tileDataSource[i][j + spotsToFill] = currentSpot;
-        }
-      }
-    }
-  }
 
   sharedIndex(arrOne, arrTwo) {
     let match = [];
@@ -730,22 +694,6 @@ export default class ChunksGrid extends Component<{}> {
   }
 
 
-  componentDidUpdate() {
-    // !!! Make this take a "Type" and perform an animation based on the
-    // type of update that's occured. ie swipe, condense, load.
-
-/*
-    console.log("component did update was called");
-    switch (this.animationState) {
-      case animationType.SWAP:
-        this.animateValuesToLocationsSwapStyle();
-        break;
-      case animationType.FALL:
-        this.animateValuesToLocationsWaterfalStyle();
-        break;
-    }
-    */
-  }
 
   initializeDataSource() {
     // Grid that contains the keys that will be assigned to each tile via map
@@ -767,10 +715,6 @@ export default class ChunksGrid extends Component<{}> {
       return dataRows;
     });
     return tileData;
-  }
-
-  componentWillMount() {
-    this.animateValuesToLocationsWaterfalStyle();
   }
 
   onLayout(event) {
@@ -960,17 +904,48 @@ export default class ChunksGrid extends Component<{}> {
 
   // Weird name
 
-  recolorMatches(neighbors) {
-    neighbors.map(e => {
-      let i = e[0];
-      let j = e[1];
-      let currentAssetObject = this.state.tileDataSource[i][j].assetObj
-      let rand = getRandomInt(this.cardCue.length)
-      let newAsset = this.cardCue[rand]
-      this.state.tileDataSource[i][j].setAsset(newAsset)
-      this.state.tileDataSource[i][j].selected = false
-      this.state.tileDataSource[i][j].scale.setValue(1)
-      this.state.tileDataSource[i][j].explored = false
+  condenseColumns(newData) {
+
+    let spotsToFill = 0;
+
+    // NOTE: HARDCODED!
+    for (let i = 0; i < 5; i++) {
+      spotsToFill = 0;
+
+      // Iterate through each column
+      for (let j = 4; j >= 0; j--) {
+        // NOTE: Wait...there's only one of this. Couldn't I use "containsIndexPair?""
+        // Check to see if the element is a spot that needs filling.
+        if (newData[i][j].explored == true) {
+          // Increment the spots to fill...since we found a spot to fill.
+          spotsToFill++;
+          // Place the location above the top of the screen for when it "falls"
+        } else if (spotsToFill > 0) {
+          // Move bean downward
+          const currentSpot = newData[i][j];
+          const newSpot = newData[i][j + spotsToFill];
+
+          newData[i][j] = newSpot;
+          newData[i][j + spotsToFill] = currentSpot;
+
+        }
+      }
+    }
+  }
+
+
+  recolorMatches(tileData) {
+    tileData.map(row => {
+      row.map(e => {
+            if (e.explored == true) {
+            let rand = getRandomInt(this.cardCue.length)
+            let newAsset = this.cardCue[rand]
+            e.assetObj = newAsset
+            e.selected = false
+            e.scale.setValue(1)
+            e.explored = false
+          }
+        })
     });
   }
 
@@ -979,50 +954,54 @@ export default class ChunksGrid extends Component<{}> {
       let i = indices[0]
       let j = indices[1]
 
-      let value = this.state.tileDataSource[i][j].value
-
+      let value = this.state.tileDataSource[i][j].assetObj.value
+      let animateTo = [i*TILE_WIDTH,j*TILE_WIDTH]
+      this.state.tileDataSource[i][j].explored = true
       this.exploreAndTag(i,j)
+      console.log("animateTo X AND Y",animateTo)
+      //this.state.tileDataSource[i][j].explored = false
+      this.state.tileDataSource[i][j].assetObj =  this.state.tileDataSource[i][j].assetObj.numeral
 
-      let indexes = []
-      this.state.tileDataSource.forEach((row,i) => { row.forEach((e,j) => {
-        if (e.explored) {
-          indexes.push([i,j])
-        }
-      })})
+      this.state.tileDataSource.forEach(row => {
+        row.forEach(e => {
+           if (e.explored){
+                console.log("BALLLLLLS")
+                e.assetObj = e.assetObj.numeral}})
+})
 
+      this.setState({tileDataSource: this.state.tileDataSource})
 
-      indexes.forEach(e => {
+      let quantity = 0
+      this.state.tileDataSource.forEach((row,i) => {
+        row.forEach((e,j) => {
+          if (e.explored == true){
+                quantity += 1
+                Animated.sequence([
+                  Animated.timing(e.scale, {
+                    toValue: 1.2,
+                    duration: 250,
+                    useNativeDriver: true
+                  }),
+                Animated.timing(e.scale, {
+                  toValue: 0,
+                  duration: 250,
+                  useNativeDriver: true
+                }),
+              ]).start(() => {
+                console.log("c.numeral",e)
+                e.location.setValue({x: TILE_WIDTH*i,y: -4*TILE_WIDTH})})
+           }
+        })})
 
-        Animated.sequence([
-        Animated.timing(this.state.tileDataSource[e[0]][e[1]].scale, {
-          toValue: 1.3,
-          duration: 150,
-          useNativeDriver: true
-        }),
-        Animated.timing(this.state.tileDataSource[e[0]][e[1]].scale, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true
-        })]).start()})
-
-        setTimeout(()=> {this.props.updateScore({value: value,quantity: indexes.length,turnOver: false,gameOver: false})
-          this.recolorMatches(indexes)
-          this.condenseColumns(indexes)
+        setTimeout(() => {
+          this.props.updateScore({value: value,quantity: quantity,turnOver: false,gameOver: false})
+          this.condenseColumns(this.state.tileDataSource)
+          this.recolorMatches(this.state.tileDataSource)
           this.setState({tileDataSource: this.state.tileDataSource})
-          this.animateValuesToLocationsWaterfalStyle()
-
-          // This is where the magi needs to happen
-          if (this.numbersFound.length == 10){
-            this.currentLevelIndex += 1
-            if (this.currentLevelIndex <= 5){
-              this.resetGrid()
-              this.props.updateScore({value: value,isValid: true,turnOver: true,gameOver: false})
-            } else {
-              this.props.updateScore({value: value,isValid: true,turnOver: true,gameOver: true})
-            }
-          }},300)
+      },510)
 
   }
+
 
 resetGrid(){
     this.cardsForThisLevel = shuffleNumbersWithType(this.myLevels[this.currentLevelIndex])
@@ -1032,21 +1011,6 @@ resetGrid(){
     this.animateValuesToLocationsWaterfalStyle()
 }
 
-// NOTE: These functions are absurd.
-checkMatch(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  if (this.state.tileDataSource[iF][jF].value == this.state.tileDataSource[iS][jS].value) {
-    return true
-  } else {
-    return false
-  }
-}
 
 allAreNumbers(match){
   let areNumbers = true
@@ -1060,74 +1024,6 @@ allAreNumbers(match){
   })
   return areNumbers
 }
-
-computeDiversityBonus(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  if (this.state.tileDataSource[iF][jF].assetObj != this.state.tileDataSource[iS][jS].assetObj) {
-    return 1
-  } else {
-    return 0
-  }
-}
-
-
-
-
-computeNumberBonus(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  let bonus = 0
-
-  if (this.state.tileDataSource[iF][jF].assetObj.type == Types.NUMERAL) {
-    bonus +=1
-  }
-
-  if (this.state.tileDataSource[iS][jS].assetObj.type == Types.NUMERAL){
-    bonus +=1
-  }
-  return bonus
-}
-
-
-
-clearMatch(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  this.state.tileDataSource[iF][jF].selected = false
-  this.state.tileDataSource[iS][jS].selected = false
-  this.setState({tileDataSource: this.state.tileDataSource})
-}
-
-
-
- getSelected() {
-   let selected = []
-   this.state.tileDataSource.forEach((row,i) => {
-     row.forEach((e,j) => {
-       if (e.selected) {
-         selected.push([i,j])
-       }
-     })
-   })
-   return selected
- }
-
 
   render() {
     return (

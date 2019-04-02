@@ -55,6 +55,7 @@ class TileData {
     this.image = assetObj.img
     this.rotation = new Animated.Value(0);
     this.scale = new Animated.Value(1);
+    this.markedForUpdate = true
   }
 
   setAsset(obj){
@@ -179,6 +180,7 @@ export default class SpeedGrid extends Component<{}> {
     // This creates the array of Tile components that is stored as a state variable.
     this.state.tileDataSource.map((row, i) => {
       let rows = row.map((e, j) => {
+        if (e.markedForUpdate == true){
         components.push(
           <SpeedTile
           location={e.location}
@@ -191,6 +193,7 @@ export default class SpeedGrid extends Component<{}> {
           selected = {e.selected}
           />
         );
+      }
       });
       // This is where the error occurs where an element no longer receives touches.
       // Don't wrap this in a view.
@@ -327,12 +330,6 @@ export default class SpeedGrid extends Component<{}> {
           // Increment the spots to fill...since we found a spot to fill.
           spotsToFill++;
           // Place the location above the top of the screen for when it "falls"
-          this.state.tileDataSource[i][j].location.setValue({
-            x: TILE_WIDTH * i,
-            y: -3 * TILE_WIDTH
-          });
-          this.state.tileDataSource[i][j].scale.setValue(1);
-
         } else if (spotsToFill > 0) {
           // Move bean downward
           const currentSpot = this.state.tileDataSource[i][j];
@@ -649,20 +646,7 @@ export default class SpeedGrid extends Component<{}> {
 
 
   componentDidUpdate() {
-    // !!! Make this take a "Type" and perform an animation based on the
-    // type of update that's occured. ie swipe, condense, load.
-
-/*
-    console.log("component did update was called");
-    switch (this.animationState) {
-      case animationType.SWAP:
-        this.animateValuesToLocationsSwapStyle();
-        break;
-      case animationType.FALL:
-        this.animateValuesToLocationsWaterfalStyle();
-        break;
-    }
-    */
+    this.animateValuesToLocationsWaterfalStyle()
   }
 
   initializeDataSource() {
@@ -891,9 +875,13 @@ export default class SpeedGrid extends Component<{}> {
       this.state.tileDataSource[i][j].setAsset(newAsset)
       this.state.tileDataSource[i][j].selected = false
       this.state.tileDataSource[i][j].scale.setValue(1)
+      this.setState({tileDataSource: this.state.tileDataSource})
     });
   }
 
+  renderTileComponents(currentComponents) {
+    let tileComponents = []
+  }
 
   onTouch(indices) {
       let i = indices[0]
@@ -916,13 +904,16 @@ export default class SpeedGrid extends Component<{}> {
           duration: 150,
           useNativeDriver: true
         })]).start(()=> {
+          this.state.tileDataSource[i][j].location.setValue({
+            x: TILE_WIDTH * i,
+            y: -3 * TILE_WIDTH
+          });
+          this.state.tileDataSource[i][j].scale.setValue(1);
           this.props.updateScore({value: value,isValid: true,turnOver: false,gameOver: false})
           this.recolorMatches([[i,j]])
           this.condenseColumns([[i,j]])
           this.setState({tileDataSource: this.state.tileDataSource})
-          this.animateValuesToLocationsWaterfalStyle()
 
-          // This is where the magi needs to happen
           if (this.numbersFound.length == 10){
             this.currentLevelIndex += 1
             if (this.currentLevelIndex <= 5){
@@ -935,7 +926,6 @@ export default class SpeedGrid extends Component<{}> {
         })
 
       } else {
-        this.props.updateScore({value: value,isValid: false,turnOver: false,gameOver: false})
         Animated.sequence([
         Animated.timing(this.state.tileDataSource[i][j].scale, {
           toValue: 1.3,
@@ -946,7 +936,7 @@ export default class SpeedGrid extends Component<{}> {
           toValue: 1,
           duration: 150,
           useNativeDriver: true
-        })]).start()
+        })]).start(()=> {this.props.updateScore({value: value,isValid: false,turnOver: false,gameOver: false})})
       }
   }
 

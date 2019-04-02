@@ -431,6 +431,11 @@ export const getNumbersWithType = (type) => {
 
       break;
     }
+    case (Types.RED): {
+      return  initNumbers()
+
+      break;
+    }
     default: {
       return []
     }

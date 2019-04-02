@@ -85,7 +85,7 @@ class ChunksGameScreen extends Component {
       numbersFound: [],
       tuffysHeadLocation: new Animated.ValueXY(0, 0),
       gameModalLocation: new Animated.ValueXY(0, 0),
-      numberOfMoves: 10,
+      numberOfMoves: 15,
       jamScore: 0,
       totalScore: null,
       beanScore: 0,
@@ -478,8 +478,8 @@ class ChunksGameScreen extends Component {
             {...this.props}
           />
         </View>
-        {gameModal}
         <PickLevelModal selectLevel = {this.selectLevel.bind(this)} location = {this.state.xyLevelModal} style = {styles.pickLevelModal}/>
+        {gameModal}
       </ImageBackground>
     );
   }
@@ -594,7 +594,7 @@ let styles = StyleSheet.create({
     flex: 1,
     marginTop: 2*TILE_WIDTH,
     textAlign: "center",
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
     fontSize: TILE_WIDTH / 1.5,
     alignItems: "center"
   },
@@ -605,7 +605,7 @@ let styles = StyleSheet.create({
   scoreText: {
     alignItems: "center",
     textAlign: "center",
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
     fontSize: TILE_WIDTH / 1.5
   },
   gameOverModal: {
@@ -653,17 +653,17 @@ let styles = StyleSheet.create({
   },
   justPlayButtonText: {
     fontSize: TILE_WIDTH / 3,
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
     color: "#9135EE"
   },
   modalButtonText: {
     fontSize: TILE_WIDTH / 3,
     color: "#FFF65F",
-    //fontFamily: "ChalkboardSE-Regular"
+    fontFamily: "ChalkboardSE-Regular"
   },
   playAgainButtonText: {
     fontSize: TILE_WIDTH / 3,
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
   },
   pickLevelModal:  {
     position: 'absolute',

@@ -54,13 +54,9 @@ export const removeIndexes = (arr, indexes) => {
 };
 
 export const testRemoveIndexes = () => {
-  console.log("BEGIN: testRemoveIndexes(arr,indexes)");
   let theArray = [[0, 0], [1, 0], [0, 1], [1, 1]];
   let theIndexes = [[1, 0], [0, 1]];
-  console.log("arr", theArray);
-  console.log("indexes", theIndexes);
   let poop = removeIndexes(theArray, theIndexes);
-  console.log("testing remove indexes", poop);
 };
 
 /*

@@ -43,13 +43,11 @@ export default class Tile extends Component<{}> {
   render() {
     const tileStyle = this.props.selected ? styles.selectedTile : styles.normalTile
 
-    return <Animated.View style={[styles.normalTile,
+    return <Animated.View onStartShouldSetResponder={this.onPress.bind(this)} style={[styles.normalTile,
           { transform: [{ translateX: this.props.location.x }, { translateY: this.props.location.y }, { scale: this.props.scale}] }
-        ]}
->
-<TouchableWithoutFeedback onPress = {this.onPress.bind(this)}>
+        ]}>
 <Image style = {tileStyle} source = {this.props.img}/>
-</TouchableWithoutFeedback></Animated.View>
+</Animated.View>
 }
 }
 

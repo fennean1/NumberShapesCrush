@@ -933,7 +933,7 @@ export default class Swappables extends Component<{}> {
       let j = indices[1]
 
 
-      const animateTouch = Animated.sequence([
+      Animated.sequence([
       Animated.timing(this.state.tileDataSource[i][j].scale, {
         toValue: 1.25,
         duration: 150,
@@ -1120,14 +1120,9 @@ clearMatch(indexes) {
     };
 
     return (
-      <GestureRecognizer
-       onLayout={this.onLayout.bind(this)}
-        config={config}
-        style={styles.gestureContainer}
-        onSwipe={(direction, state) => this.onSwipe(direction, state)}
-      >
+      <View style={styles.gestureContainer}>
         {this.props.currentLevel != null && this.renderTiles()}
-      </GestureRecognizer>
+      </View>
     );
   }
 }

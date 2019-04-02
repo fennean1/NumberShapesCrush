@@ -401,6 +401,7 @@ class GameScreen extends Component {
       </ImageBackground>
     );
   }
+
 }
 
 let Window = Dimensions.get("window");
@@ -504,7 +505,7 @@ let styles = StyleSheet.create({
     flex: 5,
     //backgroundColor: "#ff51f3",
     textAlign: "center",
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
     fontSize: TILE_WIDTH / 1.5
     //alignItems: "center"
     //backgroundColor: "blue"
@@ -514,7 +515,7 @@ let styles = StyleSheet.create({
     flex: 1,
     marginTop: 2*TILE_WIDTH,
     textAlign: "center",
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
     fontSize: TILE_WIDTH / 1.5,
     alignItems: "center"
   },
@@ -525,7 +526,7 @@ let styles = StyleSheet.create({
   scoreText: {
     alignItems: "center",
     textAlign: "center",
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
     fontSize: TILE_WIDTH / 1.5
   },
   gameOverModal: {
@@ -574,17 +575,17 @@ let styles = StyleSheet.create({
   },
   justPlayButtonText: {
     fontSize: TILE_WIDTH / 3,
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
     color: "#9135EE"
   },
   modalButtonText: {
     fontSize: TILE_WIDTH / 3,
     color: "#FFF65F",
-    //fontFamily: "ChalkboardSE-Regular"
+    fontFamily: "ChalkboardSE-Regular"
   },
   playAgainButtonText: {
     fontSize: TILE_WIDTH / 3,
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
   },
   dropInModal:  {
     position: 'absolute',
