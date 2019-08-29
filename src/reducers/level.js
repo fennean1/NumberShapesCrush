@@ -1,8 +1,10 @@
 
-const levelReducer = (state = [], action) => {
+const levelReducer = (state = {}, action) => {
   switch (action.type) {
     case "SET_LEVEL": {
-      return action.value
+      console.log("ballsack")
+      console.log("action",action)
+      return 4
     }
     default:
       return state;

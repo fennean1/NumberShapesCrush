@@ -16,6 +16,7 @@ import {
   Image,
   TouchableWithoutFeedback,
   TouchableOpacity,
+  TouchableHighlight,
 } from "react-native";
 
 let pjb = require("../assets/PinkJellyBean.png");
@@ -27,36 +28,46 @@ let yjb = require("../assets/YellowJellyBean.png");
 let rjb = require("../assets/RedJellyBean.png");
 
 export default class SpeedTile extends Component<{}> {
-
   constructor(props) {
-    super(props)
+    super(props);
 
-    this.state  =  {
+    this.state = {
       highlighted: false
-    }
+    };
   }
 
   onPress() {
-    this.props.onTouch(this.props.indices)
+    this.props.onTouch(this.props.indices);
   }
 
   render() {
-    const tileStyle = styles.normalTile
+    const tileStyle = styles.normalTile;
 
-    return <Animated.View style={[styles.normalTile,
-          { transform: [{ translateX: this.props.location.x }, { translateY: this.props.location.y }, { scale: this.props.scale}] }
+    return (
+      <Animated.View
+        style={[
+          styles.normalTile,
+          {
+            transform: [
+              { translateX: this.props.location.x },
+              { translateY: this.props.location.y },
+              { scale: this.props.scale }
+            ]
+          }
         ]}
->
-<TouchableOpacity style = {tileStyle} onPress = {this.onPress.bind(this)}>
-<Image style = {tileStyle} source = {this.props.img}/>
-</TouchableOpacity></Animated.View>
-}
+      >
+        <TouchableOpacity underlayColor = {null} activeOpacity = {0.80} style={tileStyle} onPress={this.onPress.bind(this)}>
+          <Image style={tileStyle} source={this.props.img} />
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
 }
 
 let Window = Dimensions.get("window");
 let windowSpan = Math.min(Window.width, Window.height);
 let TILE_WIDTH = windowSpan / 7;
-let colored = false
+let colored = false;
 
 let styles = StyleSheet.create({
   selectedTile: {
@@ -65,13 +76,13 @@ let styles = StyleSheet.create({
     position: "absolute",
     borderRadius: 5,
     borderColor: "gray",
-    borderWidth: TILE_WIDTH/20
+    borderWidth: TILE_WIDTH / 20
   },
   normalTile: {
-      width: TILE_WIDTH,
-      height: TILE_WIDTH,
-      position: "absolute",
-    }
+    width: TILE_WIDTH,
+    height: TILE_WIDTH,
+    position: "absolute"
+  }
 });
 
 module.exports = SpeedTile;

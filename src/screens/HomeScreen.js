@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import ReactNative from "react-native";
-import SwappableGrid from "../components/SwappableGrid";
 //import {App} from './App';
 import Dimensions from "Dimensions";
 import { connect } from "react-redux";
@@ -25,7 +24,8 @@ let LevelFourButton = require("../assets/LevelFourButton.png");
 let PracticeButton = require("../assets/PracticeButton.png");
 let MatchingButton = require("../assets/MatchingButton.png");
 let ChunkingButton = require("../assets/ChunkingButton.png");
-
+let SwappingButton = require("../assets/SwappingButton.png");
+let GoButton = require("../assets/GoButton.png")
 
 
 let floatingClouds = require("../assets/FloatingClouds.png");
@@ -41,8 +41,9 @@ class HomeScreen extends Component {
 
   setLevel(value) {
     const { navigate } = this.props.navigation;
-    this.props.dispatch({type: "SET_LEVEL",value: value})
-    navigate("GameScreen")
+    console.log("props",this.props.dispatch({type: "SET_LEVEL"}))
+    console.log('this.props.level',this.props.level)
+    //navigate("GameScreen")
   }
 
   // FOR TESTING REDUX: <Text> The Red Bean Count Is: {this.props.screenProps.redBeanCount} </Text>
@@ -50,23 +51,11 @@ class HomeScreen extends Component {
     const { navigate } = this.props.navigation;
     return (
       <ImageBackground source={justClouds} style={styles.backGroundImage}>
-      <TouchableOpacity
-        style={styles.playbutton}
-        onPress={() => navigate("SpeedGame")}
-      >
-        <Image source={PracticeButton} style={styles.backGroundImage} />
-      </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.playbutton}
-            onPress={() => this.setLevel(1)}
+        <TouchableOpacity
+            style={styles.gobutton}
+            onPress={() =>navigate("ChunksScreen")}
           >
-            <Image source={MatchingButton} style={styles.backGroundImage} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.playbutton}
-            onPress={() => navigate("ChunksScreen")}
-          >
-            <Image source={ChunkingButton} style={styles.backGroundImage} />
+            <Image source={GoButton} style={styles.backGroundImage} />
           </TouchableOpacity>
       </ImageBackground>
     );
@@ -116,6 +105,12 @@ let styles = StyleSheet.create({
     marginTop: 50,
     height: windowWidth / 6,
     width: windowWidth / 1.5,
+    alignItems: "center"
+    //backgroundColor:'#2c3e50'
+  },
+  gobutton: {
+    height: windowWidth / 3,
+    width: windowWidth / 3,
     alignItems: "center"
     //backgroundColor:'#2c3e50'
   }

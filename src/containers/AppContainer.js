@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import ReactNative from "react-native";
-import SwappableGrid from "../components/SwappableGrid";
 import Dimensions from "Dimensions";
 import ImageTypes from "../components/ImageTypes";
 
@@ -9,6 +8,7 @@ const MatchingGameScreen = require("../screens/MatchingGameScreen");
 const SpeedGameScreen = require("../screens/SpeedGameScreen");
 const HighScores = require("../screens/HighScores")
 const ChunksGameScreen = require("../screens/ChunksGameScreen");
+const SwappingGameScreen = require("../screens/SwappingGameScreen");
 const {
   View,
   Text,
@@ -30,6 +30,10 @@ const ChunksGame = ({ navigation, screenProps }) => {
 
 const MatchingGame = ({ navigation, screenProps }) => {
   return <MatchingGameScreen navigation={navigation} screenProps={screenProps} />;
+};
+
+const SwappingGame = ({ navigation, screenProps }) => {
+  return <SwappingGameScreen navigation={navigation} screenProps={screenProps} />;
 };
 
 const SpeedGame = ({ navigation, screenProps }) => {
@@ -74,6 +78,14 @@ const AppNavigator = createStackNavigator({
       gesturesEnabled: false,
     }
   },
+  SwappingGame: {
+    screen: SwappingGame,
+    navigationOptions: {
+      title: "Play!",
+      header: null,
+      gesturesEnabled: false,
+    }
+  },
   ChunksScreen: {
     screen: ChunksGame,
     navigationOptions: {
@@ -88,19 +100,18 @@ const AppNavigator = createStackNavigator({
       title: "Play!",
       header: null,
       gesturesEnabled: false,
-    }
+    },
+  },
+  HighScores: {
+    screen: High,
+    navigationOptions: {
+      title: "Play!",
+      header: null,
+      gesturesEnabled: false,
+    },
   }
 });
 
-class AppContainer extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return <AppNavigator screenProps={this.props} />;
-  }
-}
 
 let styles = StyleSheet.create({
   mainContainer: {

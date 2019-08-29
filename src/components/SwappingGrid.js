@@ -1,5 +1,3 @@
-
-
 import React, { Component } from "react";
 import {
   Platform,
@@ -20,11 +18,26 @@ import GestureRecognizer, {
 
 import Tile from "./Tile";
 
-import { ImageTypes, CardTypes, Types, initVisualCardsWPropsForLevel, initNumCardsWPropsForLevel,getObjectsForCardType,initAllNumbers,getLevel} from "../components/ImageTypes";
+import {
+  ImageTypes,
+  CardTypes,
+  Types,
+  getLevelSeqence,
+  initVisualCardsWPropsForLevel,
+  initNumCardsWPropsForLevel,
+  getObjectsForCardType,
+  initAllNumbers,
+  getLevel
+} from "../components/ImageTypes";
 
-import { getJamJarFromBean, isCandy, getCandyFromBean, isJam } from "../components/JamFunctions";
+import {
+  getJamJarFromBean,
+  isCandy,
+  getCandyFromBean,
+  isJam
+} from "../components/JamFunctions";
 
-import {NUMBER_SHAPES,initAllNumberShapes} from "../components/ImageTypes";
+import { NUMBER_SHAPES, initAllNumberShapes } from "../components/ImageTypes";
 
 import {
   getRandomInt,
@@ -49,18 +62,19 @@ class TileData {
     this.value = assetObj.value;
     this.fadeAnimation = new Animated.Value(1);
     this.key = key;
-    this.selected = false
-    this.assetObj = assetObj
+    this.selected = false;
+    this.assetObj = assetObj;
     this.location = new Animated.ValueXY();
-    this.image = assetObj.img
+    this.image = assetObj.img;
     this.rotation = new Animated.Value(0);
     this.scale = new Animated.Value(1);
+    this.explored = true;
   }
 
-  setAsset(obj){
-    this.assetObj = obj
-    this.value = obj.value
-    this.image = obj.img
+  setAsset(obj) {
+    this.assetObj = obj;
+    this.value = obj.value;
+    this.image = obj.img;
   }
 }
 
@@ -78,22 +92,25 @@ export default class Swappables extends Component<{}> {
   constructor(props) {
     super(props);
 
-    console.log("this.props.level inside swappable grid",this.props.level)
-    this.visualCardsWithProps = []
-    this.numCardsWithProps = initNumCardsWPropsForLevel(3)
+    console.log("this.props.level inside swappable grid", this.props.level);
+    this.visualCardsWithProps = [];
+    this.numCardsWithProps = initNumCardsWPropsForLevel(3);
 
     // Inititalize to swipe up, will change later.
     this.swipeDirection = swipeDirections.SWIPE_UP;
-    this.isCandy = false
-    this.currentIJ = {}
-    this.nextIJ = {}
-    this.crunchThisImage = ImageTypes.REDJELLYBEAN
-    this.crunchTheseIfCandy = new Array([[0,0]]);
+    this.isCandy = false;
+    this.currentIJ = {};
+    this.nextIJ = {};
+    this.crunchThisImage = ImageTypes.REDJELLYBEAN;
+    this.crunchTheseIfCandy = new Array([[0, 0]]);
+    this.turnsThisLevel = 0;
+    this.beansThisLevel = 0;
+    this.currentLevelIndex = 0;
 
     // NOTE New Variables for new game:
-    this.numberOfSelected = 0
-    this.selectedIndexes = []
-    this.jar = null
+    this.numberOfSelected = 0;
+    this.selectedIndexes = [];
+    this.jar = null;
 
     // Speed of the animations
     this.speed = 100; // Rate at which the animation occurs.
@@ -103,8 +120,8 @@ export default class Swappables extends Component<{}> {
     this.otherDirection = rowOrCol.COLUMN;
     this.cancelTouches = false;
     this.consecutiveSwaps = 1;
-    this.potentialMatch = []
-    this.firstLoad = true
+    this.potentialMatch = [];
+    this.firstLoad = true;
 
     this.previousSwappedIndexes = [];
     this.shouldReimburseForSwap = true;
@@ -115,9 +132,7 @@ export default class Swappables extends Component<{}> {
     };
   }
 
-
   onSwipe(gestureName, gestureState) {
-
     if (this.cancelTouches == false && this.props.gameOver == false) {
       let initialGestureX = gestureState.x0;
       let initialGestureY = gestureState.y0;
@@ -139,8 +154,6 @@ export default class Swappables extends Component<{}> {
       //  TODO: Make sure that the boundary conditions 0 and 4 aren't HARDCODED
       switch (gestureName) {
         case SWIPE_UP:
-
-
           if (j > 0) {
             this.swipeDirection = SWIPE_UP;
             this.swap(i, j, 0, -1);
@@ -148,7 +161,6 @@ export default class Swappables extends Component<{}> {
 
           break;
         case SWIPE_DOWN:
-
           if (j < 4) {
             this.swipeDirection = SWIPE_DOWN;
             this.swap(i, j, 0, 1);
@@ -156,8 +168,6 @@ export default class Swappables extends Component<{}> {
 
           break;
         case SWIPE_LEFT:
-
-
           if (i > 0) {
             this.swipeDirection = SWIPE_LEFT;
             this.swap(i, j, -1, 0);
@@ -165,8 +175,6 @@ export default class Swappables extends Component<{}> {
 
           break;
         case SWIPE_RIGHT:
-
-
           if (i < 4) {
             this.swipeDirection = SWIPE_RIGHT;
             this.swap(i, j, 1, 0);
@@ -178,65 +186,73 @@ export default class Swappables extends Component<{}> {
 
   // data - the array of
   renderTiles() {
-
-  if (this.firstLoad){
-    this.firstLoad = false
-    this.visualCardsWithProps = getLevel(this.props.currentLevel)
-    this.state.tileDataSource = this.initializeDataSource()
-    let components = [];
-    // This creates the array of Tile components that is stored as a state variable.
-    this.state.tileDataSource.map((row, i) => {
-      let rows = row.map((e, j) => {
-        components.push(
-          <Tile
-          location={e.location}
-          scale={e.scale}
-          key={e.key}
-          rotation={e.rotation}
-          img={e.image}
-          onTouch = {this.onTouch.bind(this)}
-          indices = {[i,j]}
-          selected = {e.selected}
-          />
-        );
+    if (this.firstLoad) {
+      this.firstLoad = false;
+      console.log("current Level", this.props.currentLevel);
+      this.visualCardsWithProps = getLevelSeqence();
+      this.visualCardsWithProps = this.visualCardsWithProps.filter(
+        e =>
+          e.value <= 6 + this.props.currentLevel &&
+          e.value >= this.props.currentLevel
+      );
+      console.log(
+        "visualCardsWithProps length",
+        this.visualCardsWithProps.length
+      );
+      this.state.tileDataSource = this.initializeDataSource();
+      let components = [];
+      // This creates the array of Tile components that is stored as a state variable.
+      this.state.tileDataSource.map((row, i) => {
+        let rows = row.map((e, j) => {
+          components.push(
+            <Tile
+              location={e.location}
+              scale={e.scale}
+              key={e.key}
+              rotation={e.rotation}
+              img={e.image}
+              onTouch={this.onTouch.bind(this)}
+              indices={[i, j]}
+              selected={e.selected}
+            />
+          );
+        });
+        // This is where the error occurs where an element no longer receives touches.
+        // Don't wrap this in a view.
+        return;
+        rows;
       });
-      // This is where the error occurs where an element no longer receives touches.
-      // Don't wrap this in a view.
-      return;
-      rows;
-    });
-    this.animateValuesToLocationsWaterfalStyle()
-    return components;
-  } else {
-    let components = [];
-    // This creates the array of Tile components that is stored as a state variable.
-    this.state.tileDataSource.map((row, i) => {
-      let rows = row.map((e, j) => {
-        components.push(
-          <Tile
-          location={e.location}
-          scale={e.scale}
-          key={e.key}
-          rotation={e.rotation}
-          img={e.image}
-          onTouch = {this.onTouch.bind(this)}
-          indices = {[i,j]}
-          selected = {e.selected}
-          />
-        );
+      this.animateValuesToLocationsWaterfalStyle();
+      return components;
+    } else {
+      let components = [];
+      // This creates the array of Tile components that is stored as a state variable.
+      this.state.tileDataSource.map((row, i) => {
+        let rows = row.map((e, j) => {
+          components.push(
+            <Tile
+              location={e.location}
+              scale={e.scale}
+              key={e.key}
+              rotation={e.rotation}
+              img={e.image}
+              onTouch={this.onTouch.bind(this)}
+              indices={[i, j]}
+              selected={e.selected}
+            />
+          );
+        });
+        // This is where the error occurs where an element no longer receives touches.
+        // Don't wrap this in a view.
+        return;
+        rows;
       });
-      // This is where the error occurs where an element no longer receives touches.
-      // Don't wrap this in a view.
-      return;
-      rows;
-    });
-    return components;
-  }
+      return components;
+    }
   }
 
   // takes the indexes that will be animated
   animateCandyCrunch(indexesToAnimate) {
-
     let len = indexesToAnimate.length;
 
     for (var n = 0; n < len; n++) {
@@ -256,16 +272,29 @@ export default class Swappables extends Component<{}> {
           toValue: 0,
           duration: 150,
           useNativeDriver: true
-        }),
+        })
       ]).start(() => {
         this.animationState = animationType.FALL;
       });
     }
   }
 
+  getNumberOfTypes(match) {
+    let types = {};
+    match.forEach(e => {
+      let i = e[0];
+      let j = e[1];
+      let type = this.state.tileDataSource[i][j].assetObj.type;
+      if (types[type]) {
+      } else {
+        types[type] = 1;
+      }
+    });
+    return Object.keys(types).length;
+  }
 
   // takes the indexes that will be animated and
-  animateBeanMatch(indexesToAnimate,location,jar) {
+  animateBeanMatch(indexesToAnimate, location, jar) {
     let locationToAnimateTo = [
       location[0] * TILE_WIDTH,
       location[1] * TILE_WIDTH
@@ -279,16 +308,25 @@ export default class Swappables extends Component<{}> {
       let i = e[0];
       let j = e[1];
 
+      /*
+      let numeral = this.state.tileDataSource[i][j].assetObj.numeral;
+      this.state.tileDataSource[i][j].setAsset(
+        this.state.tileDataSource[i][j].assetObj.numeral
+      );
+*/
+      console.log("HOLY SHIT IS THIS WORKING???");
+
+      //this.setState({tileDataSource: this.state.tileDataSource})
       Animated.sequence([
-        Animated.delay(350),
+        Animated.delay(200),
         Animated.timing(this.state.tileDataSource[i][j].scale, {
           toValue: 1.05,
-          duration: 150,
+          duration: 225,
           useNativeDriver: true
         }),
         Animated.timing(this.state.tileDataSource[i][j].scale, {
-          toValue: 1,
-          duration: 150,
+          toValue: 0,
+          duration: 225,
           useNativeDriver: true
         }),
         Animated.timing(this.state.tileDataSource[i][j].location, {
@@ -303,9 +341,8 @@ export default class Swappables extends Component<{}> {
     }
   }
 
-
   // takes the indexes that will be animated and
-  animateNumberMatch(indexesToAnimate,location) {
+  animateNumberMatch(indexesToAnimate, location) {
     let locationToAnimateTo = [
       location[0] * TILE_WIDTH,
       location[1] * TILE_WIDTH
@@ -343,7 +380,6 @@ export default class Swappables extends Component<{}> {
   }
 
   condenseColumns(beanIndexes) {
-
     let spotsToFill = 0;
     // NOTE: HARDCODED!
     for (let i = 0; i < 5; i++) {
@@ -366,7 +402,6 @@ export default class Swappables extends Component<{}> {
             y: -3 * TILE_WIDTH
           });
           this.state.tileDataSource[i][j].scale.setValue(1);
-
         } else if (spotsToFill > 0) {
           // Move bean downward
           const currentSpot = this.state.tileDataSource[i][j];
@@ -426,8 +461,8 @@ export default class Swappables extends Component<{}> {
     let swipeBeganAt = [i, j];
     let swipeDirectedAt = [i + dx, j + dy];
 
-    this.currentIJ = swipeBeganAt
-    this.nextIJ = swipeDirectedAt
+    this.currentIJ = swipeBeganAt;
+    this.nextIJ = swipeDirectedAt;
 
     if (
       this.containsIndexPair(this.previousSwappedIndexes, swipeBeganAt) &&
@@ -439,11 +474,12 @@ export default class Swappables extends Component<{}> {
       let inc = Math.pow(-1, this.consecutiveSwaps);
       console.log("increment", inc);
       this.props.incrementTurns(inc);
-
+      this.turnsThisLevel += inc;
     } else {
       console.log("Don't need to give swap back");
-      this.consecutiveSwaps = 1
+      this.consecutiveSwaps = 1;
       this.props.incrementTurns(-1);
+      this.turnsThisLevel += -1;
     }
 
     // Log the previous indexes
@@ -454,20 +490,18 @@ export default class Swappables extends Component<{}> {
     const swapStarter = this.state.tileDataSource[i][j];
     const swapEnder = this.state.tileDataSource[i + dx][j + dy];
 
-
-        Animated.parallel([
-          Animated.timing(swapStarter.location, {
-            toValue: {x: TILE_WIDTH*(i+dx),y: TILE_WIDTH*(j+dy)},
-            duration: 120,
-            useNativeDriver: true
-          }),
-          Animated.timing(swapEnder.location, {
-            toValue: {x: TILE_WIDTH*i,y: TILE_WIDTH*j},
-            duration: 120,
-            useNativeDriver: true
-          }),
-        ]).start()
-
+    Animated.parallel([
+      Animated.timing(swapStarter.location, {
+        toValue: { x: TILE_WIDTH * (i + dx), y: TILE_WIDTH * (j + dy) },
+        duration: 120,
+        useNativeDriver: true
+      }),
+      Animated.timing(swapEnder.location, {
+        toValue: { x: TILE_WIDTH * i, y: TILE_WIDTH * j },
+        duration: 120,
+        useNativeDriver: true
+      })
+    ]).start(() => this.updateGrid());
 
     /* NOTE Collect Swap metadata to determine how to manage the candy (now RainbowBean)
     if (this.isCandy = isCandy(swapStarter.imageType)){
@@ -484,8 +518,6 @@ export default class Swappables extends Component<{}> {
     // Perform the swap - this calls "Component did update" - I think.
     newData[i][j] = swapEnder;
     newData[i + dx][j + dy] = swapStarter;
-
-    this.updateGrid();
   }
 
   // Handles swipe events
@@ -495,45 +527,74 @@ export default class Swappables extends Component<{}> {
     let jamThisTurn = 0;
 
     let allMatches = this.allMatchesOnBoard();
+    let typeReducer = (acc, val) => acc + this.getNumberOfTypes(val);
+    let typeCount = allMatches.reduce(typeReducer, 0);
+    console.log("TYPE COUNT", typeCount);
+
+    let scoreReducer = (acc, e) => {
+      let lengthOfMatch = e.length;
+      let i = e[0][0];
+      let j = e[0][1];
+      console.log("IJ", i, j);
+      let val = this.state.tileDataSource[i][j].assetObj.value;
+      let points = lengthOfMatch * val;
+      return acc + points;
+    };
+    let score = allMatches.reduce(scoreReducer, 0);
+    console.log("SCORE", score);
+    this.props.updateScore(score, this.visualCardsWithProps.length);
+
+    if (typeCount > 1) {
+      this.props.incrementTurns(typeCount - 1);
+    }
+
+    allMatches.forEach(m => {
+      m.forEach(e => {
+        let i = e[0];
+        let j = e[1];
+        this.state.tileDataSource[i][j].setAsset(
+          this.state.tileDataSource[i][j].assetObj.numeral
+        );
+      });
+    });
+
+    console.log("setting state!");
+    this.setState({ tileDataSource: this.state.tileDataSource });
 
     // CANDY MEANS RAINBOW BEAN!
-    if (this.isCandy){
-        this.cancelTouches = true
+    if (this.isCandy) {
+      this.cancelTouches = true;
 
-        if (isJam(this.crunchThisImage)){
-          jamThisTurn = this.crunchTheseIfCandy.length  // crunchTheseIfCandy contains
-          // the index of the rainbow bean so we have to subtract one.
-          this.props.incrementTurns(jamThisTurn);
-        } else {
-          beansThisTurn = (this.crunchTheseIfCandy.length-1)*5
-          this.props.incrementTurns(1)
-        }
+      if (isJam(this.crunchThisImage)) {
+        jamThisTurn = this.crunchTheseIfCandy.length; // crunchTheseIfCandy contains
+        // the index of the rainbow bean so we have to subtract one.
+        this.props.incrementTurns(jamThisTurn);
+      } else {
+        beansThisTurn = (this.crunchTheseIfCandy.length - 1) * 5;
 
-        this.props.updateScore(beansThisTurn,3*jamThisTurn)
+        this.props.incrementTurns(1);
+      }
 
-        this.animateCandyCrunch(this.crunchTheseIfCandy)
+      this.animateCandyCrunch(this.crunchTheseIfCandy);
 
-        setTimeout(()=> {
-          this.recolorMatches(this.crunchTheseIfCandy)
-          this.condenseColumns(this.crunchTheseIfCandy)
-          this.setState({tileDataSource: this.state.tileDataSource})
-          this.animateValuesToLocationsWaterfalStyle()
-          this.animationState = animationType.SWAP
+      setTimeout(() => {
+        this.recolorMatches(this.crunchTheseIfCandy);
+        this.condenseColumns(this.crunchTheseIfCandy);
+        this.setState({ tileDataSource: this.state.tileDataSource });
+        this.animateValuesToLocationsWaterfalStyle();
+        this.animationState = animationType.SWAP;
 
         setTimeout(() => {
           if (this.allMatchesOnBoard().length != 0) {
-            this.isCandy = false
+            this.isCandy = false;
             this.updateGrid();
           } else {
             this.cancelTouches = false;
             this.animationState = animationType.SWAP;
           }
         }, 1200);
-
-      },1200)
-
-    }
-    else if (allMatches.length != 0) {
+      }, 1200);
+    } else if (allMatches.length != 0) {
       this.cancelTouches = true;
       // Previousy swapped indexes stores the indexes that were most
       // recently swapped to determine if turn reimbursement
@@ -541,12 +602,9 @@ export default class Swappables extends Component<{}> {
       this.previousSwappedIndexes = [];
       let duplicates = this.returnDuplicates(allMatches);
 
-
       // These are the indexes that were matched and need to be replaced with new beans
       let indexesToRemove = [];
       if (duplicates.length == 1) {
-
-
         const withSharedIndexes = duplicates.map(e => {
           let allWithIndex = returnAllMatchesWithIndex(allMatches, e);
           if (allWithIndex.length > 0) {
@@ -565,10 +623,10 @@ export default class Swappables extends Component<{}> {
           }
         });
 
-
         withSharedIndexes.map((row, i) => {
           // This reduces the beans this turn by one to account for the shared index being counted twice
           beansThisTurn = beansThisTurn - withSharedIndexes.length;
+
           // Animate to the index that they share
           let animateTo = this.sharedIndex(row[0], row[1]);
 
@@ -576,7 +634,7 @@ export default class Swappables extends Component<{}> {
             // Get the indexs of the first item
             let i = match[0][0];
             let j = match[0][1];
-            let currentObject = this.state.tileDataSource[i][j].assetObj
+            let currentObject = this.state.tileDataSource[i][j].assetObj;
             let currentImage = this.state.tileDataSource[i][j].imageType;
 
             if (currentObject.type == CardTypes.num) {
@@ -584,72 +642,65 @@ export default class Swappables extends Component<{}> {
               // NOTE replace the above line with a seperate animate function for when we make a match of numbers.
               jamThisTurn += match.length;
             } else {
-              this.animateBeanMatch(match, animateTo,currentObject.numeral);
+              this.animateBeanMatch(match, animateTo, currentObject.numeral);
               beansThisTurn += match.length;
-              indexesToRemove.push(animateTo);
+              //indexesToRemove.push(animateTo);
             }
           });
-
-
         });
 
         // Check to see if the first match in the set of those withoutSharedIndexes is zero.
-        if (withoutSharedIndexes[0].length != 0){
+        if (withoutSharedIndexes[0].length != 0) {
+          withoutSharedIndexes.map((row, i) => {
+            // This reduces the beans this turn by one to account for the shared index being counted twice
+            beansThisTurn = beansThisTurn - withSharedIndexes.length;
+            // Animate to the index that they share
+            let animateTo = row[0][0];
+            console.log("animateTo in withoutSharedIndexes", animateTo);
 
-        withoutSharedIndexes.map((row, i) => {
-          // This reduces the beans this turn by one to account for the shared index being counted twice
-          beansThisTurn = beansThisTurn - withSharedIndexes.length;
-          // Animate to the index that they share
-          let animateTo = row[0][0]
-          console.log("animateTo in withoutSharedIndexes",animateTo)
+            row.map(match => {
+              // Get the indexs of the first item
+              let i = match[0][0];
+              let j = match[0][1];
+              let currentAsset = this.state.tileDataSource[i][j].assetObj;
 
-          row.map(match => {
-            // Get the indexs of the first item
-            let i = match[0][0];
-            let j = match[0][1];
-            let currentAsset = this.state.tileDataSource[i][j].assetObj;
-
-            this.animateBeanMatch(match, animateTo,currentAsset.numeral);
-            beansThisTurn += match.length;
-            indexesToRemove.push(animateTo);
+              this.animateBeanMatch(match, animateTo, currentAsset.numeral);
+              beansThisTurn += match.length;
+              //indexesToRemove.push(animateTo);
+            });
           });
-        });
-}
-
+        }
       } else {
         allMatches.map(match => {
-
           let u = match[0][0];
           let v = match[0][1];
-          let currentAsset = this.state.tileDataSource[u][v].assetObj
+          let currentAsset = this.state.tileDataSource[u][v].assetObj;
 
           // Retreive first index in match
           if (this.allAreNumbers(match)) {
             this.animateNumberMatch(match, [2, -8]);
-            this.props.incrementTurns(4)
+            this.props.incrementTurns(4);
             jamThisTurn += match.length;
           } else {
             // Give them candy if the match is greater than 3.
             if (match.length > 3) {
-               this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
+              this.state.tileDataSource[u][v].setAsset(currentAsset.numeral);
             } else {
-                //this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
+              //this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
             }
-            this.jar = currentAsset.numeral
+            this.jar = currentAsset.numeral;
             // This completion handler for animated bean match will set the asset.
-            this.animateBeanMatch(match, match[0],currentAsset.numeral);
+            this.animateBeanMatch(match, match[0], currentAsset.numeral);
             beansThisTurn += match.length;
-            indexesToRemove.push(match[0]);
+            //indexesToRemove.push(match[0]);
           }
         });
       }
 
       // Everytime you get jam match you get extra turns.
       if (jamThisTurn > 0) {
-        this.props.incrementTurns(2*(jamThisTurn-2));
+        this.props.incrementTurns(2 * (jamThisTurn - 2));
       }
-
-      this.props.updateScore(beansThisTurn, 3*jamThisTurn);
 
       // TODO: Flatten all matches before...wait...what about duplicate indexes?
       // Duplicate indexes will never need removal!!!!!
@@ -659,13 +710,12 @@ export default class Swappables extends Component<{}> {
 
       // Waits for "animate match" to complete.
       setTimeout(() => {
-
         allMatches.map(match => {
           this.recolorMatches(match);
           this.condenseColumns(match);
         });
-        this.setState({tileDataSource: this.state.tileDataSource})
-        this.animateValuesToLocationsWaterfalStyle()
+        this.setState({ tileDataSource: this.state.tileDataSource });
+        this.animateValuesToLocationsWaterfalStyle();
 
         setTimeout(() => {
           if (this.allMatchesOnBoard().length != 0) {
@@ -674,19 +724,18 @@ export default class Swappables extends Component<{}> {
           } else {
             this.cancelTouches = false;
             this.animationState = animationType.SWAP;
+            this.beansThisLevel += beansThisTurn;
+            console.log("beans this level", this.beansThisLevel);
           }
         }, 1200);
       }, 1200);
     }
-
   }
-
 
   componentDidUpdate() {
     // !!! Make this take a "Type" and perform an animation based on the
     // type of update that's occured. ie swipe, condense, load.
-
-/*
+    /*
     console.log("component did update was called");
     switch (this.animationState) {
       case animationType.SWAP:
@@ -711,10 +760,9 @@ export default class Swappables extends Component<{}> {
 
     var tileData = keys.map((row, i) => {
       let dataRows = row.map((key, j) => {
-
-        let newAsset = this.visualCardsWithProps.shift()
-        let data = new TileData(newAsset,key);
-
+        let randInt = getRandomInt(36 - this.turnsThisLevel);
+        let newAsset = this.visualCardsWithProps.shift();
+        let data = new TileData(newAsset, key);
         return data;
       });
       return dataRows;
@@ -731,20 +779,18 @@ export default class Swappables extends Component<{}> {
     console.log("this is the origin", this.origin);
   }
 
-
   isMatch(itemOne, itemTwo) {
-
-    let bothNums = (itemOne.type == CardTypes.num) && (itemTwo.type == CardTypes.num)
-    let atLeastOneIsNum = (itemOne.type == CardTypes.num) || (itemTwo.type == CardTypes.num)
-    let onlyOneIsNum = !bothNums && atLeastOneIsNum
-
+    let bothNums =
+      itemOne.type == CardTypes.num && itemTwo.type == CardTypes.num;
+    let atLeastOneIsNum =
+      itemOne.type == CardTypes.num || itemTwo.type == CardTypes.num;
+    let onlyOneIsNum = !bothNums && atLeastOneIsNum;
 
     if (itemOne.value == itemTwo.value) {
       return true;
     } else {
-      return false
+      return false;
     }
-
   }
 
   checkRowColForMatch(coordinate, direction) {
@@ -904,7 +950,11 @@ export default class Swappables extends Component<{}> {
           Animated.spring(
             //Step 1
             elem.location, //Step 2
-            { toValue: { x: TILE_WIDTH * i, y: TILE_WIDTH * j }, friction: 4, useNativeDriver: true } //Step 3
+            {
+              toValue: { x: TILE_WIDTH * i, y: TILE_WIDTH * j },
+              friction: 4,
+              useNativeDriver: true
+            } //Step 3
           )
         ]).start(() => {});
       });
@@ -917,18 +967,19 @@ export default class Swappables extends Component<{}> {
     neighbors.map(e => {
       let i = e[0];
       let j = e[1];
-      let currentAssetObject = this.state.tileDataSource[i][j].assetObj
-      let newAsset = this.visualCardsWithProps.shift()
-      if (currentAssetObject.type != Types.NUMERAL){
-        this.visualCardsWithProps.push(currentAssetObject)
+      console.log("this.beansThisLevel", this.beansThisLevel);
+      console.log("current level index", this.currentLevelIndex);
+      if (this.beansThisLevel > 36) {
+        this.beansThisLevel = 0;
       }
-      this.state.tileDataSource[i][j].setAsset(newAsset)
-      this.state.tileDataSource[i][j].selected = false
+      let newAssetObj = this.visualCardsWithProps.shift();
+      this.state.tileDataSource[i][j].setAsset(newAssetObj);
+      this.state.tileDataSource[i][j].selected = false;
     });
   }
 
-
   onTouch(indices) {
+    /*
       let i = indices[0]
       let j = indices[1]
 
@@ -1028,89 +1079,88 @@ export default class Swappables extends Component<{}> {
         }
 
     }
+    */
   }
 
+  // NOTE: These functions are absurd.
+  checkMatch(indexes) {
+    let firstIndex = indexes[0];
+    let secondIndex = indexes[1];
+    let iF = firstIndex[0];
+    let jF = firstIndex[1];
+    let iS = secondIndex[0];
+    let jS = secondIndex[1];
 
-// NOTE: These functions are absurd.
-checkMatch(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  if (this.state.tileDataSource[iF][jF].value == this.state.tileDataSource[iS][jS].value) {
-    return true
-  } else {
-    return false
-  }
-}
-
-allAreNumbers(match){
-  let areNumbers = true
-  if (match.length == 0){
-    return false
-  }
-  console.log("match",match)
-  match.map(e => {
-    if (this.state.tileDataSource[e[0]][e[1]].assetObj.type != CardTypes.num){
-      areNumbers = false
+    if (
+      this.state.tileDataSource[iF][jF].value ==
+      this.state.tileDataSource[iS][jS].value
+    ) {
+      return true;
+    } else {
+      return false;
     }
-  })
-  return areNumbers
-}
-
-
-computeNumberBonus(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  let bonus = 0
-
-  if (this.state.tileDataSource[iF][jF].assetObj.type == Types.NUMERAL) {
-    bonus +=1
   }
 
-  if (this.state.tileDataSource[iS][jS].assetObj.type == Types.NUMERAL){
-    bonus +=1
+  allAreNumbers(match) {
+    let areNumbers = true;
+    if (match.length == 0) {
+      return false;
+    }
+    console.log("match", match);
+    match.map(e => {
+      if (
+        this.state.tileDataSource[e[0]][e[1]].assetObj.type != CardTypes.num
+      ) {
+        areNumbers = false;
+      }
+    });
+    return areNumbers;
   }
-  return bonus
-}
 
+  computeNumberBonus(indexes) {
+    let firstIndex = indexes[0];
+    let secondIndex = indexes[1];
+    let iF = firstIndex[0];
+    let jF = firstIndex[1];
+    let iS = secondIndex[0];
+    let jS = secondIndex[1];
 
+    let bonus = 0;
 
-clearMatch(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
+    if (this.state.tileDataSource[iF][jF].assetObj.type == Types.NUMERAL) {
+      bonus += 1;
+    }
 
-  this.state.tileDataSource[iF][jF].selected = false
-  this.state.tileDataSource[iS][jS].selected = false
-  this.setState({tileDataSource: this.state.tileDataSource})
-}
+    if (this.state.tileDataSource[iS][jS].assetObj.type == Types.NUMERAL) {
+      bonus += 1;
+    }
+    return bonus;
+  }
 
+  clearMatch(indexes) {
+    let firstIndex = indexes[0];
+    let secondIndex = indexes[1];
+    let iF = firstIndex[0];
+    let jF = firstIndex[1];
+    let iS = secondIndex[0];
+    let jS = secondIndex[1];
 
+    this.state.tileDataSource[iF][jF].selected = false;
+    this.state.tileDataSource[iS][jS].selected = false;
+    this.setState({ tileDataSource: this.state.tileDataSource });
+  }
 
- getSelected() {
-   let selected = []
-   this.state.tileDataSource.forEach((row,i) => {
-     row.forEach((e,j) => {
-       if (e.selected) {
-         selected.push([i,j])
-       }
-     })
-   })
-   return selected
- }
-
+  getSelected() {
+    let selected = [];
+    this.state.tileDataSource.forEach((row, i) => {
+      row.forEach((e, j) => {
+        if (e.selected) {
+          selected.push([i, j]);
+        }
+      });
+    });
+    return selected;
+  }
 
   render() {
     const config = {
@@ -1120,9 +1170,14 @@ clearMatch(indexes) {
     };
 
     return (
-      <View style={styles.gestureContainer}>
+      <GestureRecognizer
+        onLayout={this.onLayout.bind(this)}
+        config={config}
+        style={styles.gestureContainer}
+        onSwipe={(direction, state) => this.onSwipe(direction, state)}
+      >
         {this.props.currentLevel != null && this.renderTiles()}
-      </View>
+      </GestureRecognizer>
     );
   }
 }
@@ -1165,18 +1220,18 @@ let styles = StyleSheet.create({
     flex: 1,
     width: TILE_WIDTH * 5,
     height: TILE_WIDTH * 5,
-    position: "absolute",
+    position: "absolute"
     //backgroundColor: "#31a51a"
   },
   container: {
     width: TILE_WIDTH * 5,
-    height: TILE_WIDTH * 5,
+    height: TILE_WIDTH * 5
     //backgroundColor: 'white',
     //backgroundColor: red
   },
   tile: {
-    width: 0.9*TILE_WIDTH,
-    height: 0.9*TILE_WIDTH,
-    borderRadius: 10,
+    width: 0.9 * TILE_WIDTH,
+    height: 0.9 * TILE_WIDTH,
+    borderRadius: 10
   }
 });

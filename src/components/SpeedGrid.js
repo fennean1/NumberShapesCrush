@@ -1,5 +1,3 @@
-
-
 import React, { Component } from "react";
 import {
   Platform,
@@ -20,11 +18,26 @@ import GestureRecognizer, {
 
 import SpeedTile from "./SpeedTile";
 
-import {shuffleNumbersWithType, ImageTypes, CardTypes, Types, initVisualCardsWPropsForLevel, initNumCardsWPropsForLevel,getObjectsForCardType,initAllNumbers,getLevel} from "../components/ImageTypes";
+import {
+  shuffleNumbersWithType,
+  ImageTypes,
+  CardTypes,
+  Types,
+  initVisualCardsWPropsForLevel,
+  initNumCardsWPropsForLevel,
+  getObjectsForCardType,
+  initAllNumbers,
+  getLevel
+} from "../components/ImageTypes";
 
-import { getJamJarFromBean, isCandy, getCandyFromBean, isJam } from "../components/JamFunctions";
+import {
+  getJamJarFromBean,
+  isCandy,
+  getCandyFromBean,
+  isJam
+} from "../components/JamFunctions";
 
-import {NUMBER_SHAPES,initAllNumberShapes} from "../components/ImageTypes";
+import { NUMBER_SHAPES, initAllNumberShapes } from "../components/ImageTypes";
 
 import {
   getRandomInt,
@@ -49,19 +62,19 @@ class TileData {
     this.value = assetObj.value;
     this.fadeAnimation = new Animated.Value(1);
     this.key = key;
-    this.selected = false
-    this.assetObj = assetObj
+    this.selected = false;
+    this.assetObj = assetObj;
     this.location = new Animated.ValueXY();
-    this.image = assetObj.img
+    this.image = assetObj.img;
     this.rotation = new Animated.Value(0);
     this.scale = new Animated.Value(1);
-    this.markedForUpdate = true
+    this.markedForUpdate = true;
   }
 
-  setAsset(obj){
-    this.assetObj = obj
-    this.value = obj.value
-    this.image = obj.img
+  setAsset(obj) {
+    this.assetObj = obj;
+    this.value = obj.value;
+    this.image = obj.img;
   }
 }
 
@@ -79,23 +92,33 @@ export default class SpeedGrid extends Component<{}> {
   constructor(props) {
     super(props);
 
-
-    this.myLevels = [Types.BLUE,Types.RED,Types.PURPLE,Types.ORANGE,Types.PINK,Types.GREEN]
-    this.cardsForThisLevel = shuffleNumbersWithType(this.myLevels[0])
-    this.cardCue = [...this.cardsForThisLevel,...this.cardsForThisLevel,...this.cardsForThisLevel]
-    this.currentLevelIndex = 0
+    this.myLevels = [
+      Types.BLUE,
+      Types.RED,
+      Types.PURPLE,
+      Types.ORANGE,
+      Types.PINK,
+      Types.GREEN
+    ];
+    this.cardsForThisLevel = shuffleNumbersWithType(this.myLevels[0]);
+    this.cardCue = [
+      ...this.cardsForThisLevel,
+      ...this.cardsForThisLevel,
+      ...this.cardsForThisLevel
+    ];
+    this.currentLevelIndex = 0;
     // Inititalize to swipe up, will change later.
     this.swipeDirection = swipeDirections.SWIPE_UP;
-    this.isCandy = false
-    this.currentIJ = {}
-    this.nextIJ = {}
-    this.crunchThisImage = ImageTypes.REDJELLYBEAN
-    this.crunchTheseIfCandy = new Array([[0,0]]);
+    this.isCandy = false;
+    this.currentIJ = {};
+    this.nextIJ = {};
+    this.crunchThisImage = ImageTypes.REDJELLYBEAN;
+    this.crunchTheseIfCandy = new Array([[0, 0]]);
 
     // NOTE New Variables for new game:
-    this.numberOfSelected = 0
-    this.selectedIndexes = []
-    this.jar = null
+    this.numberOfSelected = 0;
+    this.selectedIndexes = [];
+    this.jar = null;
 
     // Speed of the animations
     this.speed = 100; // Rate at which the animation occurs.
@@ -108,7 +131,7 @@ export default class SpeedGrid extends Component<{}> {
 
     this.previousSwappedIndexes = [];
     this.shouldReimburseForSwap = true;
-    this.numbersFound = []
+    this.numbersFound = [];
 
     this.state = {
       tileComponents: [],
@@ -116,9 +139,7 @@ export default class SpeedGrid extends Component<{}> {
     };
   }
 
-
   onSwipe(gestureName, gestureState) {
-
     if (this.cancelTouches == false && this.props.gameOver == false) {
       let initialGestureX = gestureState.x0;
       let initialGestureY = gestureState.y0;
@@ -140,7 +161,6 @@ export default class SpeedGrid extends Component<{}> {
       //  TODO: Make sure that the boundary conditions 0 and 4 aren't HARDCODED
       switch (gestureName) {
         case SWIPE_UP:
-
           if (j > 0) {
             this.swipeDirection = SWIPE_UP;
             this.swap(i, j, 0, -1);
@@ -148,7 +168,6 @@ export default class SpeedGrid extends Component<{}> {
 
           break;
         case SWIPE_DOWN:
-
           if (j < 4) {
             this.swipeDirection = SWIPE_DOWN;
             this.swap(i, j, 0, 1);
@@ -156,7 +175,6 @@ export default class SpeedGrid extends Component<{}> {
 
           break;
         case SWIPE_LEFT:
-
           if (i > 0) {
             this.swipeDirection = SWIPE_LEFT;
             this.swap(i, j, -1, 0);
@@ -164,7 +182,6 @@ export default class SpeedGrid extends Component<{}> {
 
           break;
         case SWIPE_RIGHT:
-
           if (i < 4) {
             this.swipeDirection = SWIPE_RIGHT;
             this.swap(i, j, 1, 0);
@@ -180,20 +197,20 @@ export default class SpeedGrid extends Component<{}> {
     // This creates the array of Tile components that is stored as a state variable.
     this.state.tileDataSource.map((row, i) => {
       let rows = row.map((e, j) => {
-        if (e.markedForUpdate == true){
-        components.push(
-          <SpeedTile
-          location={e.location}
-          scale={e.scale}
-          key={e.key}
-          rotation={e.rotation}
-          img={e.image}
-          onTouch = {this.onTouch.bind(this)}
-          indices = {[i,j]}
-          selected = {e.selected}
-          />
-        );
-      }
+        if (e.markedForUpdate == true) {
+          components.push(
+            <SpeedTile
+              location={e.location}
+              scale={e.scale}
+              key={e.key}
+              rotation={e.rotation}
+              img={e.image}
+              onTouch={this.onTouch.bind(this)}
+              indices={[i, j]}
+              selected={e.selected}
+            />
+          );
+        }
       });
       // This is where the error occurs where an element no longer receives touches.
       // Don't wrap this in a view.
@@ -205,7 +222,6 @@ export default class SpeedGrid extends Component<{}> {
 
   // takes the indexes that will be animated
   animateCandyCrunch(indexesToAnimate) {
-
     let len = indexesToAnimate.length;
 
     for (var n = 0; n < len; n++) {
@@ -225,16 +241,15 @@ export default class SpeedGrid extends Component<{}> {
           toValue: 0,
           duration: 150,
           useNativeDriver: true
-        }),
+        })
       ]).start(() => {
         this.animationState = animationType.FALL;
       });
     }
   }
 
-
   // takes the indexes that will be animated and
-  animateBeanMatch(indexesToAnimate,location,jar) {
+  animateBeanMatch(indexesToAnimate, location, jar) {
     let locationToAnimateTo = [
       location[0] * TILE_WIDTH,
       location[1] * TILE_WIDTH
@@ -272,9 +287,8 @@ export default class SpeedGrid extends Component<{}> {
     }
   }
 
-
   // takes the indexes that will be animated and
-  animateNumberMatch(indexesToAnimate,location) {
+  animateNumberMatch(indexesToAnimate, location) {
     let locationToAnimateTo = [
       location[0] * TILE_WIDTH,
       location[1] * TILE_WIDTH
@@ -312,7 +326,6 @@ export default class SpeedGrid extends Component<{}> {
   }
 
   condenseColumns(beanIndexes) {
-
     let spotsToFill = 0;
     // NOTE: HARDCODED!
     for (let i = 0; i < 5; i++) {
@@ -389,8 +402,8 @@ export default class SpeedGrid extends Component<{}> {
     let swipeBeganAt = [i, j];
     let swipeDirectedAt = [i + dx, j + dy];
 
-    this.currentIJ = swipeBeganAt
-    this.nextIJ = swipeDirectedAt
+    this.currentIJ = swipeBeganAt;
+    this.nextIJ = swipeDirectedAt;
 
     if (
       this.containsIndexPair(this.previousSwappedIndexes, swipeBeganAt) &&
@@ -402,10 +415,9 @@ export default class SpeedGrid extends Component<{}> {
       let inc = Math.pow(-1, this.consecutiveSwaps);
       console.log("increment", inc);
       this.props.incrementTurns(inc);
-
     } else {
       console.log("Don't need to give swap back");
-      this.consecutiveSwaps = 1
+      this.consecutiveSwaps = 1;
       this.props.incrementTurns(-1);
     }
 
@@ -417,20 +429,18 @@ export default class SpeedGrid extends Component<{}> {
     const swapStarter = this.state.tileDataSource[i][j];
     const swapEnder = this.state.tileDataSource[i + dx][j + dy];
 
-
-        Animated.parallel([
-          Animated.timing(swapStarter.location, {
-            toValue: {x: TILE_WIDTH*(i+dx),y: TILE_WIDTH*(j+dy)},
-            duration: 120,
-            useNativeDriver: true
-          }),
-          Animated.timing(swapEnder.location, {
-            toValue: {x: TILE_WIDTH*i,y: TILE_WIDTH*j},
-            duration: 120,
-            useNativeDriver: true
-          }),
-        ]).start()
-
+    Animated.parallel([
+      Animated.timing(swapStarter.location, {
+        toValue: { x: TILE_WIDTH * (i + dx), y: TILE_WIDTH * (j + dy) },
+        duration: 120,
+        useNativeDriver: true
+      }),
+      Animated.timing(swapEnder.location, {
+        toValue: { x: TILE_WIDTH * i, y: TILE_WIDTH * j },
+        duration: 120,
+        useNativeDriver: true
+      })
+    ]).start();
 
     /* NOTE Collect Swap metadata to determine how to manage the candy (now RainbowBean)
     if (this.isCandy = isCandy(swapStarter.imageType)){
@@ -460,43 +470,40 @@ export default class SpeedGrid extends Component<{}> {
     let allMatches = this.allMatchesOnBoard();
 
     // CANDY MEANS RAINBOW BEAN!
-    if (this.isCandy){
-        this.cancelTouches = true
+    if (this.isCandy) {
+      this.cancelTouches = true;
 
-        if (isJam(this.crunchThisImage)){
-          jamThisTurn = this.crunchTheseIfCandy.length  // crunchTheseIfCandy contains
-          // the index of the rainbow bean so we have to subtract one.
-          this.props.incrementTurns(jamThisTurn);
-        } else {
-          beansThisTurn = (this.crunchTheseIfCandy.length-1)*5
-          this.props.incrementTurns(1)
-        }
+      if (isJam(this.crunchThisImage)) {
+        jamThisTurn = this.crunchTheseIfCandy.length; // crunchTheseIfCandy contains
+        // the index of the rainbow bean so we have to subtract one.
+        this.props.incrementTurns(jamThisTurn);
+      } else {
+        beansThisTurn = (this.crunchTheseIfCandy.length - 1) * 5;
+        this.props.incrementTurns(1);
+      }
 
-        this.props.updateScore(beansThisTurn,3*jamThisTurn)
+      this.props.updateScore(beansThisTurn, 3 * jamThisTurn);
 
-        this.animateCandyCrunch(this.crunchTheseIfCandy)
+      this.animateCandyCrunch(this.crunchTheseIfCandy);
 
-        setTimeout(()=> {
-          this.recolorMatches(this.crunchTheseIfCandy)
-          this.condenseColumns(this.crunchTheseIfCandy)
-          this.setState({tileDataSource: this.state.tileDataSource})
-          this.animateValuesToLocationsWaterfalStyle()
-          this.animationState = animationType.SWAP
+      setTimeout(() => {
+        this.recolorMatches(this.crunchTheseIfCandy);
+        this.condenseColumns(this.crunchTheseIfCandy);
+        this.setState({ tileDataSource: this.state.tileDataSource });
+        this.animateValuesToLocationsWaterfalStyle();
+        this.animationState = animationType.SWAP;
 
         setTimeout(() => {
           if (this.allMatchesOnBoard().length != 0) {
-            this.isCandy = false
+            this.isCandy = false;
             this.updateGrid();
           } else {
             this.cancelTouches = false;
             this.animationState = animationType.SWAP;
           }
         }, 1200);
-
-      },1200)
-
-    }
-    else if (allMatches.length != 0) {
+      }, 1200);
+    } else if (allMatches.length != 0) {
       this.cancelTouches = true;
       // Previousy swapped indexes stores the indexes that were most
       // recently swapped to determine if turn reimbursement
@@ -504,12 +511,9 @@ export default class SpeedGrid extends Component<{}> {
       this.previousSwappedIndexes = [];
       let duplicates = this.returnDuplicates(allMatches);
 
-
       // These are the indexes that were matched and need to be replaced with new beans
       let indexesToRemove = [];
       if (duplicates.length == 1) {
-
-
         const withSharedIndexes = duplicates.map(e => {
           let allWithIndex = returnAllMatchesWithIndex(allMatches, e);
           if (allWithIndex.length > 0) {
@@ -528,7 +532,6 @@ export default class SpeedGrid extends Component<{}> {
           }
         });
 
-
         withSharedIndexes.map((row, i) => {
           // This reduces the beans this turn by one to account for the shared index being counted twice
           beansThisTurn = beansThisTurn - withSharedIndexes.length;
@@ -539,7 +542,7 @@ export default class SpeedGrid extends Component<{}> {
             // Get the indexs of the first item
             let i = match[0][0];
             let j = match[0][1];
-            let currentObject = this.state.tileDataSource[i][j].assetObj
+            let currentObject = this.state.tileDataSource[i][j].assetObj;
             let currentImage = this.state.tileDataSource[i][j].imageType;
 
             if (currentObject.type == CardTypes.num) {
@@ -547,60 +550,55 @@ export default class SpeedGrid extends Component<{}> {
               // NOTE replace the above line with a seperate animate function for when we make a match of numbers.
               jamThisTurn += match.length;
             } else {
-              this.animateBeanMatch(match, animateTo,currentObject.numeral);
+              this.animateBeanMatch(match, animateTo, currentObject.numeral);
               beansThisTurn += match.length;
               indexesToRemove.push(animateTo);
             }
           });
-
-
         });
 
         // Check to see if the first match in the set of those withoutSharedIndexes is zero.
-        if (withoutSharedIndexes[0].length != 0){
+        if (withoutSharedIndexes[0].length != 0) {
+          withoutSharedIndexes.map((row, i) => {
+            // This reduces the beans this turn by one to account for the shared index being counted twice
+            beansThisTurn = beansThisTurn - withSharedIndexes.length;
+            // Animate to the index that they share
+            let animateTo = row[0][0];
+            console.log("animateTo in withoutSharedIndexes", animateTo);
 
-        withoutSharedIndexes.map((row, i) => {
-          // This reduces the beans this turn by one to account for the shared index being counted twice
-          beansThisTurn = beansThisTurn - withSharedIndexes.length;
-          // Animate to the index that they share
-          let animateTo = row[0][0]
-          console.log("animateTo in withoutSharedIndexes",animateTo)
+            row.map(match => {
+              // Get the indexs of the first item
+              let i = match[0][0];
+              let j = match[0][1];
+              let currentAsset = this.state.tileDataSource[i][j].assetObj;
 
-          row.map(match => {
-            // Get the indexs of the first item
-            let i = match[0][0];
-            let j = match[0][1];
-            let currentAsset = this.state.tileDataSource[i][j].assetObj;
-
-            this.animateBeanMatch(match, animateTo,currentAsset.numeral);
-            beansThisTurn += match.length;
-            indexesToRemove.push(animateTo);
+              this.animateBeanMatch(match, animateTo, currentAsset.numeral);
+              beansThisTurn += match.length;
+              indexesToRemove.push(animateTo);
+            });
           });
-        });
-}
-
+        }
       } else {
         allMatches.map(match => {
-
           let u = match[0][0];
           let v = match[0][1];
-          let currentAsset = this.state.tileDataSource[u][v].assetObj
+          let currentAsset = this.state.tileDataSource[u][v].assetObj;
 
           // Retreive first index in match
           if (this.allAreNumbers(match)) {
             this.animateNumberMatch(match, [2, -8]);
-            this.props.incrementTurns(4)
+            this.props.incrementTurns(4);
             jamThisTurn += match.length;
           } else {
             // Give them candy if the match is greater than 3.
             if (match.length > 3) {
-               this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
+              this.state.tileDataSource[u][v].setAsset(currentAsset.numeral);
             } else {
-                //this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
+              //this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
             }
-            this.jar = currentAsset.numeral
+            this.jar = currentAsset.numeral;
             // This completion handler for animated bean match will set the asset.
-            this.animateBeanMatch(match, match[0],currentAsset.numeral);
+            this.animateBeanMatch(match, match[0], currentAsset.numeral);
             beansThisTurn += match.length;
             indexesToRemove.push(match[0]);
           }
@@ -609,10 +607,10 @@ export default class SpeedGrid extends Component<{}> {
 
       // Everytime you get jam match you get extra turns.
       if (jamThisTurn > 0) {
-        this.props.incrementTurns(2*(jamThisTurn-2));
+        this.props.incrementTurns(2 * (jamThisTurn - 2));
       }
 
-      this.props.updateScore(beansThisTurn, 3*jamThisTurn);
+      this.props.updateScore(beansThisTurn, 3 * jamThisTurn);
 
       // TODO: Flatten all matches before...wait...what about duplicate indexes?
       // Duplicate indexes will never need removal!!!!!
@@ -622,13 +620,12 @@ export default class SpeedGrid extends Component<{}> {
 
       // Waits for "animate match" to complete.
       setTimeout(() => {
-
         allMatches.map(match => {
           this.recolorMatches(match);
           this.condenseColumns(match);
         });
-        this.setState({tileDataSource: this.state.tileDataSource})
-        this.animateValuesToLocationsWaterfalStyle()
+        this.setState({ tileDataSource: this.state.tileDataSource });
+        this.animateValuesToLocationsWaterfalStyle();
 
         setTimeout(() => {
           if (this.allMatchesOnBoard().length != 0) {
@@ -641,12 +638,10 @@ export default class SpeedGrid extends Component<{}> {
         }, 1200);
       }, 1200);
     }
-
   }
 
-
   componentDidUpdate() {
-    this.animateValuesToLocationsWaterfalStyle()
+    this.animateValuesToLocationsWaterfalStyle();
   }
 
   initializeDataSource() {
@@ -661,9 +656,8 @@ export default class SpeedGrid extends Component<{}> {
 
     var tileData = keys.map((row, i) => {
       let dataRows = row.map((key, j) => {
-
-        let newAsset = this.cardCue.shift()
-        let data = new TileData(newAsset,key);
+        let newAsset = this.cardCue.shift();
+        let data = new TileData(newAsset, key);
 
         return data;
       });
@@ -681,20 +675,18 @@ export default class SpeedGrid extends Component<{}> {
     console.log("this is the origin", this.origin);
   }
 
-
   isMatch(itemOne, itemTwo) {
-
-    let bothNums = (itemOne.type == CardTypes.num) && (itemTwo.type == CardTypes.num)
-    let atLeastOneIsNum = (itemOne.type == CardTypes.num) || (itemTwo.type == CardTypes.num)
-    let onlyOneIsNum = !bothNums && atLeastOneIsNum
-
+    let bothNums =
+      itemOne.type == CardTypes.num && itemTwo.type == CardTypes.num;
+    let atLeastOneIsNum =
+      itemOne.type == CardTypes.num || itemTwo.type == CardTypes.num;
+    let onlyOneIsNum = !bothNums && atLeastOneIsNum;
 
     if (itemOne.value == itemTwo.value) {
       return true;
     } else {
-      return false
+      return false;
     }
-
   }
 
   checkRowColForMatch(coordinate, direction) {
@@ -854,7 +846,11 @@ export default class SpeedGrid extends Component<{}> {
           Animated.spring(
             //Step 1
             elem.location, //Step 2
-            { toValue: { x: TILE_WIDTH * i, y: TILE_WIDTH * j }, friction: 4, useNativeDriver: true } //Step 3
+            {
+              toValue: { x: TILE_WIDTH * i, y: TILE_WIDTH * j },
+              friction: 4,
+              useNativeDriver: true
+            } //Step 3
           )
         ]).start(() => {});
       });
@@ -867,33 +863,32 @@ export default class SpeedGrid extends Component<{}> {
     neighbors.map(e => {
       let i = e[0];
       let j = e[1];
-      let currentAssetObject = this.state.tileDataSource[i][j].assetObj
-      let newAsset = this.cardCue.shift()
-      if (currentAssetObject.type != Types.NUMERAL){
-        this.cardCue.push(currentAssetObject)
+      let currentAssetObject = this.state.tileDataSource[i][j].assetObj;
+      let newAsset = this.cardCue.shift();
+      if (currentAssetObject.type != Types.NUMERAL) {
+        this.cardCue.push(currentAssetObject);
       }
-      this.state.tileDataSource[i][j].setAsset(newAsset)
-      this.state.tileDataSource[i][j].selected = false
-      this.state.tileDataSource[i][j].scale.setValue(1)
-      this.setState({tileDataSource: this.state.tileDataSource})
+      this.state.tileDataSource[i][j].setAsset(newAsset);
+      this.state.tileDataSource[i][j].selected = false;
+      this.state.tileDataSource[i][j].scale.setValue(1);
+      this.setState({ tileDataSource: this.state.tileDataSource });
     });
   }
 
   renderTileComponents(currentComponents) {
-    let tileComponents = []
+    let tileComponents = [];
   }
 
   onTouch(indices) {
-      let i = indices[0]
-      let j = indices[1]
+    let i = indices[0];
+    let j = indices[1];
 
-      let value = this.state.tileDataSource[i][j].value
+    let value = this.state.tileDataSource[i][j].value;
 
-      if (this.numbersFound.indexOf(value) == -1) {
+    if (this.numbersFound.indexOf(value) == -1) {
+      this.numbersFound.push(value);
 
-        this.numbersFound.push(value)
-
-        Animated.sequence([
+      Animated.sequence([
         Animated.timing(this.state.tileDataSource[i][j].scale, {
           toValue: 1.3,
           duration: 150,
@@ -903,30 +898,45 @@ export default class SpeedGrid extends Component<{}> {
           toValue: 0,
           duration: 150,
           useNativeDriver: true
-        })]).start(()=> {
-          this.state.tileDataSource[i][j].location.setValue({
-            x: TILE_WIDTH * i,
-            y: -3 * TILE_WIDTH
-          });
-          this.state.tileDataSource[i][j].scale.setValue(1);
-          this.props.updateScore({value: value,isValid: true,turnOver: false,gameOver: false})
-          this.recolorMatches([[i,j]])
-          this.condenseColumns([[i,j]])
-          this.setState({tileDataSource: this.state.tileDataSource})
-
-          if (this.numbersFound.length == 10){
-            this.currentLevelIndex += 1
-            if (this.currentLevelIndex <= 5){
-              this.resetGrid()
-              this.props.updateScore({value: value,isValid: true,turnOver: true,gameOver: false})
-            } else {
-              this.props.updateScore({value: value,isValid: true,turnOver: true,gameOver: true})
-            }
-          }
         })
+      ]).start(() => {
+        this.state.tileDataSource[i][j].location.setValue({
+          x: TILE_WIDTH * i,
+          y: -3 * TILE_WIDTH
+        });
+        this.state.tileDataSource[i][j].scale.setValue(1);
+        this.props.updateScore({
+          value: value,
+          isValid: true,
+          turnOver: false,
+          gameOver: false
+        });
+        this.recolorMatches([[i, j]]);
+        this.condenseColumns([[i, j]]);
+        this.setState({ tileDataSource: this.state.tileDataSource });
 
-      } else {
-        Animated.sequence([
+        if (this.numbersFound.length == 10) {
+          this.currentLevelIndex += 1;
+          if (this.currentLevelIndex <= 5) {
+            this.resetGrid();
+            this.props.updateScore({
+              value: value,
+              isValid: true,
+              turnOver: true,
+              gameOver: false
+            });
+          } else {
+            this.props.updateScore({
+              value: value,
+              isValid: true,
+              turnOver: true,
+              gameOver: true
+            });
+          }
+        }
+      });
+    } else {
+      Animated.sequence([
         Animated.timing(this.state.tileDataSource[i][j].scale, {
           toValue: 1.3,
           duration: 150,
@@ -936,121 +946,133 @@ export default class SpeedGrid extends Component<{}> {
           toValue: 1,
           duration: 150,
           useNativeDriver: true
-        })]).start(()=> {this.props.updateScore({value: value,isValid: false,turnOver: false,gameOver: false})})
-      }
-  }
-
-resetGrid(){
-    this.cardsForThisLevel = shuffleNumbersWithType(this.myLevels[this.currentLevelIndex])
-    this.cardCue = [...this.cardsForThisLevel,...this.cardsForThisLevel,...this.cardsForThisLevel]
-    this.setState({tileDataSource: this.initializeDataSource()})
-    this.numbersFound = []
-    this.animateValuesToLocationsWaterfalStyle()
-}
-
-// NOTE: These functions are absurd.
-checkMatch(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  if (this.state.tileDataSource[iF][jF].value == this.state.tileDataSource[iS][jS].value) {
-    return true
-  } else {
-    return false
-  }
-}
-
-allAreNumbers(match){
-  let areNumbers = true
-  if (match.length == 0){
-    return false
-  }
-  match.map(e => {
-    if (this.state.tileDataSource[e[0]][e[1]].assetObj.type != CardTypes.num){
-      areNumbers = false
+        })
+      ]).start(() => {
+        this.props.updateScore({
+          value: value,
+          isValid: false,
+          turnOver: false,
+          gameOver: false
+        });
+      });
     }
-  })
-  return areNumbers
-}
-
-computeDiversityBonus(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  if (this.state.tileDataSource[iF][jF].assetObj != this.state.tileDataSource[iS][jS].assetObj) {
-    return 1
-  } else {
-    return 0
-  }
-}
-
-
-
-
-computeNumberBonus(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
-
-  let bonus = 0
-
-  if (this.state.tileDataSource[iF][jF].assetObj.type == Types.NUMERAL) {
-    bonus +=1
   }
 
-  if (this.state.tileDataSource[iS][jS].assetObj.type == Types.NUMERAL){
-    bonus +=1
+  resetGrid() {
+    this.cardsForThisLevel = shuffleNumbersWithType(
+      this.myLevels[this.currentLevelIndex]
+    );
+    this.cardCue = [
+      ...this.cardsForThisLevel,
+      ...this.cardsForThisLevel,
+      ...this.cardsForThisLevel
+    ];
+    this.cardCue = getLevel(2);
+    this.setState({ tileDataSource: this.initializeDataSource() });
+    this.numbersFound = [];
+    this.animateValuesToLocationsWaterfalStyle();
   }
-  return bonus
-}
 
+  // NOTE: These functions are absurd.
+  checkMatch(indexes) {
+    let firstIndex = indexes[0];
+    let secondIndex = indexes[1];
+    let iF = firstIndex[0];
+    let jF = firstIndex[1];
+    let iS = secondIndex[0];
+    let jS = secondIndex[1];
 
+    if (
+      this.state.tileDataSource[iF][jF].value ==
+      this.state.tileDataSource[iS][jS].value
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
-clearMatch(indexes) {
-  let firstIndex = indexes[0]
-  let secondIndex = indexes[1]
-  let iF = firstIndex[0]
-  let jF = firstIndex[1]
-  let iS = secondIndex[0]
-  let jS = secondIndex[1]
+  allAreNumbers(match) {
+    let areNumbers = true;
+    if (match.length == 0) {
+      return false;
+    }
+    match.map(e => {
+      if (
+        this.state.tileDataSource[e[0]][e[1]].assetObj.type != CardTypes.num
+      ) {
+        areNumbers = false;
+      }
+    });
+    return areNumbers;
+  }
 
-  this.state.tileDataSource[iF][jF].selected = false
-  this.state.tileDataSource[iS][jS].selected = false
-  this.setState({tileDataSource: this.state.tileDataSource})
-}
+  computeDiversityBonus(indexes) {
+    let firstIndex = indexes[0];
+    let secondIndex = indexes[1];
+    let iF = firstIndex[0];
+    let jF = firstIndex[1];
+    let iS = secondIndex[0];
+    let jS = secondIndex[1];
 
+    if (
+      this.state.tileDataSource[iF][jF].assetObj !=
+      this.state.tileDataSource[iS][jS].assetObj
+    ) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
 
+  computeNumberBonus(indexes) {
+    let firstIndex = indexes[0];
+    let secondIndex = indexes[1];
+    let iF = firstIndex[0];
+    let jF = firstIndex[1];
+    let iS = secondIndex[0];
+    let jS = secondIndex[1];
 
- getSelected() {
-   let selected = []
-   this.state.tileDataSource.forEach((row,i) => {
-     row.forEach((e,j) => {
-       if (e.selected) {
-         selected.push([i,j])
-       }
-     })
-   })
-   return selected
- }
+    let bonus = 0;
 
+    if (this.state.tileDataSource[iF][jF].assetObj.type == Types.NUMERAL) {
+      bonus += 1;
+    }
+
+    if (this.state.tileDataSource[iS][jS].assetObj.type == Types.NUMERAL) {
+      bonus += 1;
+    }
+    return bonus;
+  }
+
+  clearMatch(indexes) {
+    let firstIndex = indexes[0];
+    let secondIndex = indexes[1];
+    let iF = firstIndex[0];
+    let jF = firstIndex[1];
+    let iS = secondIndex[0];
+    let jS = secondIndex[1];
+
+    this.state.tileDataSource[iF][jF].selected = false;
+    this.state.tileDataSource[iS][jS].selected = false;
+    this.setState({ tileDataSource: this.state.tileDataSource });
+  }
+
+  getSelected() {
+    let selected = [];
+    this.state.tileDataSource.forEach((row, i) => {
+      row.forEach((e, j) => {
+        if (e.selected) {
+          selected.push([i, j]);
+        }
+      });
+    });
+    return selected;
+  }
 
   render() {
     return (
-      <View
-       onLayout={this.onLayout.bind(this)}
-        style={styles.gestureContainer}
-      >
+      <View onLayout={this.onLayout.bind(this)} style={styles.gestureContainer}>
         {this.renderTiles()}
       </View>
     );
@@ -1095,18 +1117,18 @@ let styles = StyleSheet.create({
     flex: 1,
     width: TILE_WIDTH * 5,
     height: TILE_WIDTH * 5,
-    position: "absolute",
+    position: "absolute"
     //backgroundColor: "#31a51a"
   },
   container: {
     width: TILE_WIDTH * 5,
-    height: TILE_WIDTH * 5,
+    height: TILE_WIDTH * 5
     //backgroundColor: 'white',
     //backgroundColor: red
   },
   tile: {
-    width: 0.9*TILE_WIDTH,
-    height: 0.9*TILE_WIDTH,
-    borderRadius: 10,
+    width: 0.9 * TILE_WIDTH,
+    height: 0.9 * TILE_WIDTH,
+    borderRadius: 10
   }
 });

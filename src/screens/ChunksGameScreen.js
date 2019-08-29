@@ -4,18 +4,26 @@ import ChunksGrid from "../components/ChunksGrid";
 import Dimensions from "Dimensions";
 
 import TurnIndicator from "../components/TurnIndicator";
-import {ImageTypes , shuffleNumbersWithType, initOrangeNumbers,initPurpleNumbers,initPinkNumbers,initGreenNumbers,initBlueNumbers,initRedNumbers} from "../components/ImageTypes";
-import PickLevelModal from "../components/PickLevelModal"
+import {
+  ImageTypes,
+  shuffleNumbersWithType,
+  initOrangeNumbers,
+  initPurpleNumbers,
+  initPinkNumbers,
+  initGreenNumbers,
+  initBlueNumbers,
+  initRedNumbers,
+  NUMERALS
+} from "../components/ImageTypes";
+import PickLevelModal from "../components/PickLevelModal";
 
-import { getJamJarFromBean} from "../components/JamFunctions";
+import { getJamJarFromBean } from "../components/JamFunctions";
 import { connect } from "react-redux";
 
 import { Types, getNumbersWithType } from "../components/ImageTypes";
 
-
 let playButton = require("../assets/PlayButton.png");
 let NumberLine = require("../assets/NumberLine.png");
-
 
 const {
   View,
@@ -29,12 +37,11 @@ const {
   TouchableOpacity
 } = ReactNative;
 
-
 const InstructionalScenes = [
   ImageTypes.SWAPINSTRUCTIONS,
   ImageTypes.BEANINSTRUCTIONS,
   ImageTypes.JARINSTRUCTIONS,
-  ImageTypes.RAINBOWINSTRUCTIONS,
+  ImageTypes.RAINBOWINSTRUCTIONS
 ];
 
 let floatingClouds = require("../assets/FloatingClouds.png");
@@ -42,19 +49,30 @@ let justClouds = require("../assets/CloudsBackground.png");
 let tuffysCartoonHead = require("../assets/TuffyTile.png");
 let EndGameScene = require("../assets/FloatingClouds.png");
 
-const  num_zero = require("../assets/num-zero.png")
-const  num_one = require("../assets/num-one.png")
-const  num_two = require("../assets/num-two.png")
-const  num_three = require("../assets/num-three.png")
-const  num_four = require("../assets/num-four.png")
-const  num_five = require("../assets/num-five.png")
-const  num_six = require("../assets/num-six.png")
-const  num_seven = require("../assets/num-seven.png")
-const  num_eight = require("../assets/num-eight.png")
-const  num_nine = require("../assets/num-nine.png")
-const  num_ten = require("../assets/num-ten.png")
+const num_zero = require("../assets/num-zero.png");
+const num_one = require("../assets/num-one.png");
+const num_two = require("../assets/num-two.png");
+const num_three = require("../assets/num-three.png");
+const num_four = require("../assets/num-four.png");
+const num_five = require("../assets/num-five.png");
+const num_six = require("../assets/num-six.png");
+const num_seven = require("../assets/num-seven.png");
+const num_eight = require("../assets/num-eight.png");
+const num_nine = require("../assets/num-nine.png");
+const num_ten = require("../assets/num-ten.png");
 
-const Numbers = [num_one,num_two,num_three,num_four,num_five,num_six,num_seven,num_eight,num_nine,num_ten]
+const Numbers = [
+  num_one,
+  num_two,
+  num_three,
+  num_four,
+  num_five,
+  num_six,
+  num_seven,
+  num_eight,
+  num_nine,
+  num_ten
+];
 
 class ChunksGameScreen extends Component {
   constructor(props) {
@@ -63,51 +81,42 @@ class ChunksGameScreen extends Component {
     this.instructionsCompleted = true;
     this.tuffysHeadHeight = 50;
 
-
     // NOTE: This ensures that the swipe gestures are registerd in the correct location.
     // Be careful when modifying.
-    this.topMargin = 2 * TILE_WIDTH + windowHeight / 2 - 3.5 * TILE_WIDTH;
+    this.topMargin = 2 * TILE_WIDTH + windowHeight / 2 - 4.5 * TILE_WIDTH;
 
     this.gameOver = false;
+ 
+    this.currentTrophy = null
 
-    this.myLevels = [Types.BLUE,Types.RED,Types.PURPLE,Types.ORANGE,Types.PINK,Types.GREEN]
-    this.cardsForThisLevel = shuffleNumbersWithType(this.myLevels[0])
-    this.cardCue = [...this.cardsForThisLevel,...this.cardsForThisLevel,...this.cardsForThisLevel]
+    this.levelComplete = false;
 
-    this.levelComplete = false
-
-    this.currentLevelIndex = 0
+    this.currentLevelIndex = 0;
     this.state = {
       tuffysHeadScale: new Animated.Value(1),
       gameModalScale: new Animated.Value(1),
       modalIndex: 0,
       restart: false,
       numbersFound: [],
+      trophyLocation: new Animated.ValueXY(0,0),
+      trophyScale: new Animated.Value(1),
       tuffysHeadLocation: new Animated.ValueXY(0, 0),
       gameModalLocation: new Animated.ValueXY(0, 0),
-      numberOfMoves: 15,
+      numberOfMoves: 10,
       jamScore: 0,
       totalScore: null,
       beanScore: 0,
       turnScale: new Animated.Value(1),
       instructionsIndex: 0,
-      xyDropInModal: new Animated.ValueXY(0,0),
-      numbersData: this.initNumbersData(-300,0),
+      xyDropInModal: new Animated.ValueXY(0, 0),
       currentLevel: null,
-      xyLevelModal: new Animated.ValueXY(0,0),
-      currentLevelImages: getNumbersWithType(Types.BLUE)
+      xyLevelModal: new Animated.ValueXY(0, 0),
+      currentLevelImages: getNumbersWithType(Types.BLUE),
+      scoreFromLastTurn: '',
     };
   }
 
 
-
-
-  initNumbersData(a,b) {
-    let n = [0,1,2,3,4,5,6,7,8,9]
-
-    return n.map((e) => new Animated.ValueXY({x: a,y: b}))
-
-  }
 
   animateTuffysHead() {
     Animated.sequence([
@@ -128,19 +137,7 @@ class ChunksGameScreen extends Component {
   }
 
   endGame() {
-    this.dropModal();
-  }
-
-  showTuffy() {
-    Animated.sequence([
-      Animated.delay(100),
-      Animated.spring(this.state.tuffysHeadLocation.y, {
-        toValue: windowHeight - 2 * TILE_WIDTH,
-        friction: 5,
-        duration: 1000,
-        useNativeDriver: true
-      })
-    ]).start();
+    this.moveModalTo(0);
   }
 
   moveModalTo(yLocation) {
@@ -162,15 +159,11 @@ class ChunksGameScreen extends Component {
     ]).start();
   }
 
-
   restartGame() {
     const { navigate } = this.props.navigation;
     navigate("Root");
   }
 
-  dropModal() {
-    this.moveModalTo(0);
-  }
 
   hideModal() {
     this.moveModalTo(-7 * TILE_WIDTH);
@@ -178,18 +171,18 @@ class ChunksGameScreen extends Component {
 
   dropSelectLevelModal() {
     Animated.spring(this.state.xyLevelModal, {
-      toValue: {x: 0,y: 0.2*windowHeight},
+      toValue: { x: 0, y: 0.2 * windowHeight },
       friction: 3,
       useNativeDriver: true
     }).start();
   }
 
   dropMessageModal(messege) {
-      Animated.spring(this.state.xyDropInModal, {
-        toValue: {x: 0,y: 50},
-        friction: 3,
-        useNativeDriver: true
-      }).start();
+    Animated.spring(this.state.xyDropInModal, {
+      toValue: { x: 0, y: 50 },
+      friction: 3,
+      useNativeDriver: true
+    }).start();
   }
 
   incrementTurns(inc) {
@@ -220,136 +213,109 @@ class ChunksGameScreen extends Component {
         useNativeDriver: true
       })
     ]).start();
-
   }
 
-  selectLevel(level){
-    this.setState({totalScore: 0})
+  selectLevel(level) {
+    this.setState({ totalScore: 0 });
     Animated.timing(this.state.xyLevelModal, {
-      toValue: {x: 1.2*windowWidth,y: 0.2*windowHeight},
+      toValue: { x: 1.2 * windowWidth, y: 0.2 * windowHeight },
       duration: 300,
       useNativeDriver: true
     }).start();
-    this.setState({currentLevel: level})
+    this.setState({ currentLevel: level });
   }
 
-  updateScore(gameState){
+ calculateLevel(score){
+  
+ }
 
-  const {value,quantity,turnOver,gameOver} = gameState
+  getTrophy(score){
+    console.log("score",score)
+    console.log
+    if (score  >= 0 && score < 500){
+      console.log("blue")
+      return ImageTypes.LITTLE_BLUE_TROPHY
+    } else if (score  >= 500 && score < 1000) {
+      console.log("green")
+      return ImageTypes.LITTLE_GREEN_TROPHY
+    } else if (score  >= 1000 && score < 2000) {
+      console.log("bronze")
+      return ImageTypes.MED_BRONZE_TROPHY
+    } else if (score  >= 2000 && score < 4000) {
+      console.log("silver")
+      return ImageTypes.BIG_SILVER_TROPHY
+    }  else if (score > 4000 && score < 7000) {
+      return ImageTypes.BIG_GOLD_TROPHY
+    }  else if (score  > 7000) {
+      return ImageTypes.LEGEND_TROPHY
+    } 
+  }
 
-      this.incrementTurns(-1)
+  popTrophy(value){
+    let newScale = 2/(1+Math.pow(1.05,-value))
+    console.log("value",value)
+    this.currentTrophy = this.getTrophy(this.state.totalScore)
 
-      this.setState({totalScore: this.state.totalScore+value*quantity})
-      //this.setState({totalScore: 10})
-      Animated.timing(this.state.numbersData[value-1], {
-          toValue: {x: TILE_WIDTH/2*(value-1),y: 0},
-          duration: 300,
-          useNativeDriver: true
-        }).start(()=> {
-          if (turnOver) {
-              this.state.numbersData.forEach(e => {
-              Animated.timing(e, {
-                      toValue: {x: -300,y: 0},
-                      duration: 300,
-                      useNativeDriver: true
-                    }).start()})
-            if (gameOver) {
-               this.endGame()
-            } else {
-            this.currentLevelIndex += 1
-            setTimeout(()=>this.setState({currentLevelImages: getNumbersWithType(this.myLevels[this.currentLevelIndex])}),300)
-          }
-        }
+    
+    Animated.sequence([
+      Animated.timing(this.state.trophyScale, {
+        toValue: newScale,
+        duration: 150,
+        useNativeDriver: true
+      }),
+      Animated.spring(this.state.trophyScale, {
+        toValue: 1,
+        friction: 2,
+        duration: 150,
+        useNativeDriver: true
       })
+    ]).start();
   }
 
+  updateScore(gameState) {
 
-
-  renderNumberLine(data){
-    return <ImageBackground source = {NumberLine} style = {styles.numberLineBackGround}>
-          {this.renderNumbers(data)}
-    </ImageBackground>
+    const { value, quantity, turnOver, gameOver } = gameState;
+    let adjustedValue = Math.sqrt(value*quantity)
+    this.setState({ totalScore: this.state.totalScore + value * quantity });
+    this.setState({ scoreFromLastTurn: "+" + value * quantity});
+        if (gameOver) {
+          this.endGame();
+        }
   }
-
-  renderNumbers(data){
-    return data.map((e,i) => <Animated.Image key = {i} source = {this.state.currentLevelImages[i].img} style={[styles.normalTile,
-          { transform: [{ translateX: e.x }, { translateY: e.y }] }
-        ]}/>)
-}
 
   componentWillMount() {
-
-    this.state.tuffysHeadLocation.setValue({
-      x: 0,
-      y: windowHeight
-    });
+ 
     this.state.gameModalLocation.setValue({
       x: 0,
-      y: -7 * TILE_WIDTH
+      y: -windowHeight
     });
 
-    this.dropSelectLevelModal()
+    this.dropSelectLevelModal();
   }
-
-  goToNextLevel() {
-    this.hideModal()
-  }
-
 
   goBack() {
-    this.setState({numbersData: this.initNumbersData(0,0)})
     const { navigate } = this.props.navigation;
-    navigate("Root")
+    navigate("Root");
   }
 
   justPlayGame() {
-
     this.instructionsCompleted = true;
     this.hideModal();
   }
 
+
   gameModalContent(i) {
-    const { navigate } = this.props.navigation;
-
-    if (i == InstructionalScenes.length) {
-      this.instructionsCompleted = true;
-      this.hideModal();
-    }
-
-    if (this.instructionsCompleted == false) {
       return (
         <View style={styles.gameModalContainer}>
-          <Image
-            style={styles.gameModalImage}
-            source={InstructionalScenes[i]} //NOTE: Array and indexes go here
-          />
-          <View style={styles.modalButtonsRow}>
-            <TouchableHighlight underlayColor = {"white"}
-              onPress={this.justPlayGame.bind(this)}
-              style={styles.justPlayButton}
-            >
-            <Text style = {styles.justPlayButtonText}> Just Play!</Text>
-            </TouchableHighlight>
-            <TouchableHighlight underlayColor = {"white"}
-              style={styles.nextButton}
-              onPress={this.nextInstructions.bind(this)}
-            >
-              <Text style={styles.modalButtonText}>Next Hint</Text>
-            </TouchableHighlight>
+          <View style = {{flexDirection: 'row'}}>
+            <Image source = {this.currentTrophy} style = {styles.finalTrophy}/>
           </View>
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.gameModalContainer}>
-          <ImageBackground
-            style={styles.gameModalImage}
-            source={EndGameScene}
-        >
-          <Text style = {styles.finalScoreText}>{this.state.totalScore} Points!</Text>
-          </ImageBackground>
+          <View >
+              <Image source = {ImageTypes.TROPHY_GALLERY} style = {styles.trophyGallery} />
+             </View>
           <View style={styles.modalButtonsRow}>
-            <TouchableHighlight underlayColor = {"white"}
+            <TouchableHighlight
+              underlayColor={"white"}
               style={styles.playAgainButton}
               onPress={() => this.goBack()}
             >
@@ -358,36 +324,6 @@ class ChunksGameScreen extends Component {
           </View>
         </View>
       );
-    }
-  }
-
-  componentWillUnmount(){
-    console.log("COMPONENT IS UNMOUNTING!!")
-  }
-
-  nextInstructions() {
-
-    if (this.state.modalIndex == InstructionalScenes.length - 1) {
-      this.instructionsCompleted = true;
-      this.hideModal();
-    } else {
-      Animated.sequence([
-        Animated.timing(this.state.gameModalScale, {
-          toValue: 1.1,
-          duration: 150,
-          decay: 1,
-          useNativeDriver: true
-        }),
-        Animated.timing(this.state.gameModalScale, {
-          toValue: 1,
-          duration: 150,
-          decay: 4,
-          useNativeDriver: true
-        })
-      ]).start();
-
-      this.setState({ modalIndex: this.state.modalIndex + 1 });
-    }
   }
 
   render() {
@@ -401,7 +337,8 @@ class ChunksGameScreen extends Component {
     let scale = this.state.tuffysHeadScale;
 
     let backButton = (
-      <TouchableOpacity underlayColor = {"white"}
+      <TouchableOpacity
+        underlayColor={"white"}
         style={styles.backButton}
         onPress={() => this.goBack()}
       >
@@ -439,46 +376,65 @@ class ChunksGameScreen extends Component {
     );
 
     // TODO: D.R.Y.
-    const descriptor = gameOver => {
+    const header = gameOver => {
       if (!gameOver) {
-        return (
-          <View style={styles.topBar}>
-            {backButton}
-            <Text style={styles.text}>{this.state.totalScore}</Text>
-            {this.state.currentLevel != null && <TurnIndicator
-                          scale={this.state.turnScale}
-                          text={this.state.numberOfMoves}
-                        />}
-          </View>
+        return ( this.state.currentLevel != null && (
+              <View style = {styles.topBar}>
+                  {backButton}
+                  <Animated.Image 
+                        source = {this.currentTrophy}
+                    style={[styles.normalTile,
+                      {
+                        transform: [
+                          { translateX: this.state.trophyLocation.x },
+                          { translateY: this.state.trophyLocation.y },
+                          { scale: this.state.trophyScale }
+                        ]
+                      }
+                    ]}
+                  >
+                  </Animated.Image>
+                  <View style = {styles.turnIndicator}>
+              <TurnIndicator
+                scale={this.state.turnScale}
+                text={this.state.numberOfMoves}
+              />
+              </View>
+              </View>
+            )
         );
       } else {
         return (
           <View style={styles.topBar}>
             {backButton}
-            <Text style={styles.text} />
             <TurnIndicator scale={this.state.turnScale} text={""} />
           </View>
         );
       }
     };
 
-    const numberLine = <Image style = {styles.numberLine} source = {NumberLine}></Image>
+    const numberLine = <Image style={styles.numberLine} source={NumberLine} />;
 
     return (
       <ImageBackground source={justClouds} style={styles.backGroundImage}>
-      {descriptor(this.gameOver)}
+        {header(this.gameOver)}
         <View style={styles.gridContainer}>
           <ChunksGrid
+            popTrophy = {(value)=> this.popTrophy(value)}
             gameOver={this.gameOver}
             topMargin={this.topMargin}
             animateTuffysHead={this.animateTuffysHead.bind(this)}
             updateScore={this.updateScore.bind(this)}
-            currentLevel = {this.state.currentLevel}
+            currentLevel={this.state.currentLevel}
             incrementTurns={this.incrementTurns.bind(this)}
             {...this.props}
           />
         </View>
-        <PickLevelModal selectLevel = {this.selectLevel.bind(this)} location = {this.state.xyLevelModal} style = {styles.pickLevelModal}/>
+        <PickLevelModal
+          selectLevel={this.selectLevel.bind(this)}
+          location={this.state.xyLevelModal}
+          style={styles.pickLevelModal}
+        />
         {gameModal}
       </ImageBackground>
     );
@@ -503,11 +459,11 @@ let white = "#ffffff";
 
 let styles = StyleSheet.create({
   gameModalContainer: {
-    flex: 1,
     flexDirection: "column",
     justifyContent: "center",
-    width: 6 * TILE_WIDTH,
-    height: 6 * TILE_WIDTH,
+    width: windowWidth,
+    height: windowHeight,
+    backgroundColor: '#ffffff'
   },
   gameModalImage: {
     width: 6 * TILE_WIDTH,
@@ -527,11 +483,6 @@ let styles = StyleSheet.create({
     height: 0.5 * TILE_WIDTH,
     width: 0.5 * TILE_WIDTH
   },
-  turnIndicator: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   backGroundImage: {
     flex: 1,
     width: windowWidth,
@@ -539,80 +490,63 @@ let styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center"
   },
-  modalbackGroundImage: {
-    flex: 1,
-    width: windowWidth,
-    height: windowHeight,
-    flexDirection: "column",
-    alignItems: "center",
-    borderRadius: TILE_WIDTH/3
-  },
-  imageWithContent: {
-    flex: 1,
-    position: 'absolute',
-    width: '100%',
-    height:'100%'
-  },
   topBarAndGridContainer: {
     flex: 1,
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
-  },
-  numberLine: {
-    alignItems: "center",
-    marginBottom: 0.25*TILE_WIDTH,
-    marginTop: 0.25*TILE_WIDTH,
-    width: 5*TILE_WIDTH,
-    height: 0.5*TILE_WIDTH
+    justifyContent: "center"
   },
   gridContainer: {
     height: 5 * TILE_WIDTH,
     width: 5 * TILE_WIDTH,
     alignItems: "center",
-    marginTop: windowHeight / 2 - 4 * TILE_WIDTH,
+    marginTop: windowHeight / 2 - 4 * TILE_WIDTH
   },
   topBar: {
-    marginTop: TILE_WIDTH/2,
+    marginTop: TILE_WIDTH / 2,
     //marginTop: 1/2*(1/2*windowHeight - TILE_WIDTH*5/2)-TILE_WIDTH/2,
-    height: TILE_WIDTH*1.1,
+    height: TILE_WIDTH * 1.1,
     width: 5.5 * TILE_WIDTH,
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "center"
+  },
+  turnIndicator: {
+    flexDirection: "row",
+    flex: 0.2,
+    marginRight: 0,
   },
   text: {
     flex: 5,
     //backgroundColor: "#ff51f3",
     textAlign: "center",
-    //fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular",
     fontSize: TILE_WIDTH / 1.5
     //alignItems: "center"
     //backgroundColor: "blue"
     //color       : '#fff'
   },
+  finalTrophy: {
+    height: windowWidth,
+    width: windowWidth,
+    //backgroundColor: "pink"
+  },
   finalScoreText: {
     flex: 1,
-    marginTop: 2*TILE_WIDTH,
+    marginTop: 2 * TILE_WIDTH,
     textAlign: "center",
     fontFamily: "ChalkboardSE-Regular",
     fontSize: TILE_WIDTH / 1.5,
     alignItems: "center"
-  },
-  leaveGameButton: {
-    width: TILE_WIDTH,
-    height: TILE_WIDTH / 2
-  },
-  scoreText: {
-    alignItems: "center",
-    textAlign: "center",
-    fontFamily: "ChalkboardSE-Regular",
-    fontSize: TILE_WIDTH / 1.5
   },
   gameOverModal: {
     position: "absolute",
     height: 7 * TILE_WIDTH,
     width: 6 * TILE_WIDTH,
     flexDirection: "column"
+  },
+  trophyGallery: {
+    height: TILE_WIDTH,
+    width: "100%"
   },
   finalScoreModal: {
     height: 2 * TILE_WIDTH,
@@ -624,10 +558,6 @@ let styles = StyleSheet.create({
     height: 2 * TILE_WIDTH,
     width: 3 * TILE_WIDTH
     //backgroundColor: "#c00ffe"
-  },
-  turnIndicator: {
-    flex: 1,
-    alignItems: "center"
   },
   tuffysHead: {
     position: "absolute",
@@ -647,9 +577,9 @@ let styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     height: TILE_WIDTH / 1.5,
-    backgroundColor: "white",
-    borderRadius: TILE_WIDTH / 5,
-    borderWidth: TILE_WIDTH/80,
+    //backgroundColor: "blue",
+    //borderRadius: TILE_WIDTH / 5,
+    //borderWidth: TILE_WIDTH / 80
   },
   justPlayButtonText: {
     fontSize: TILE_WIDTH / 3,
@@ -663,19 +593,19 @@ let styles = StyleSheet.create({
   },
   playAgainButtonText: {
     fontSize: TILE_WIDTH / 3,
-    fontFamily: "ChalkboardSE-Regular",
+    fontFamily: "ChalkboardSE-Regular"
   },
-  pickLevelModal:  {
-    position: 'absolute',
-    width: TILE_WIDTH*5,
-    height: TILE_WIDTH*5.5,
-    justifyContent: 'center',
+  pickLevelModal: {
+    position: "absolute",
+    width: TILE_WIDTH * 5,
+    height: TILE_WIDTH * 5.5,
+    justifyContent: "center"
   },
-  dropInModal:  {
-    position: 'absolute',
-    width: TILE_WIDTH*5.5,
-    height: TILE_WIDTH*1.25,
-    justifyContent: 'center',
+  dropInModal: {
+    position: "absolute",
+    width: TILE_WIDTH * 5.5,
+    height: TILE_WIDTH * 1.25,
+    justifyContent: "center",
     borderRadius: 10,
     backgroundColor: white,
     borderColor: "gray",
@@ -688,22 +618,22 @@ let styles = StyleSheet.create({
     height: TILE_WIDTH / 1.5,
     borderRadius: TILE_WIDTH / 5
   },
-  normalTile: {
-      width: TILE_WIDTH/2,
-      height: TILE_WIDTH/2,
-      position: "absolute",
-    },
   numberLineBackGround: {
-        marginTop: 0.25*TILE_WIDTH,
-        marginBottom: 0.25*TILE_WIDTH,
-        width: TILE_WIDTH*5,
-        height: TILE_WIDTH*0.5,
-      },
+    marginTop: 0.25 * TILE_WIDTH,
+    marginBottom: 0.25 * TILE_WIDTH,
+    width: TILE_WIDTH * 5,
+    height: TILE_WIDTH * 0.5
+  },
+  normalTile: {
+    width: TILE_WIDTH,
+    height: TILE_WIDTH,
+    position: "absolute"
+  }
 });
 
 function mapStateToProps(state) {
   return {
-    level: state.levelReducer,
+    level: state.levelReducer
   };
 }
 

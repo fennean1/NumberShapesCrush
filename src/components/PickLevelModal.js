@@ -15,7 +15,7 @@ import {
   PanResponder,
   Image,
   ImageBackground,
-  TouchableOpacity,
+  TouchableOpacity
 } from "react-native";
 
 import ImageTypes from "../components/ImageTypes";
@@ -30,32 +30,51 @@ export default class PickLevelsModal extends Component<{}> {
     super(props);
   }
 
-
   render() {
     return (
-      <Animated.View style={[this.props.style,
-            { transform: [{ translateX: this.props.location.x }, { translateY: this.props.location.y }] }
-          ]} >
-        <View style = {styles.headerText}>
-        <Text style = {styles.text}> Pick a Level! </Text>
+      <Animated.View
+        style={[
+          this.props.style,
+          {
+            transform: [
+              { translateX: this.props.location.x },
+              { translateY: this.props.location.y }
+            ]
+          }
+        ]}
+      >
+        <View style={styles.headerText}>
+          <Text style={styles.text}> Pick a Level! </Text>
         </View>
-        <View style = {styles.buttonContainer}>
-        <View style = {styles.buttonRow}>
-        <TouchableOpacity style = {styles.levelButton} onPress = {() => this.props.selectLevel(1)}>
-        <Image style = {styles.buttonImage} source = {LevelOneButton}/>
-        </TouchableOpacity>
-        <TouchableOpacity style = {styles.levelButton} onPress = {() => this.props.selectLevel(2)}>
-        <Image style = {styles.buttonImage} source = {LevelTwoButton}/>
-        </TouchableOpacity>
-        </View>
-        <View style = {styles.buttonRow}>
-        <TouchableOpacity style = {styles.levelButton} onPress = {() => this.props.selectLevel(3)}>
-        <Image style = {styles.buttonImage} source = {LevelThreeButton}/>
-        </TouchableOpacity>
-        <TouchableOpacity style = {styles.levelButton} onPress = {() => this.props.selectLevel(4)}>
-        <Image style = {styles.buttonImage} source = {LevelFourButton}/>
-        </TouchableOpacity>
-        </View>
+        <View style={styles.buttonContainer}>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.levelButton}
+              onPress={() => this.props.selectLevel(1)}
+            >
+              <Image style={styles.buttonImage} source={LevelOneButton} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.levelButton}
+              onPress={() => this.props.selectLevel(2)}
+            >
+              <Image style={styles.buttonImage} source={LevelTwoButton} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.levelButton}
+              onPress={() => this.props.selectLevel(3)}
+            >
+              <Image style={styles.buttonImage} source={LevelThreeButton} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.levelButton}
+              onPress={() => this.props.selectLevel(4)}
+            >
+              <Image style={styles.buttonImage} source={LevelFourButton} />
+            </TouchableOpacity>
+          </View>
         </View>
       </Animated.View>
     );
@@ -71,33 +90,33 @@ let windowHeight = Window.height;
 
 let styles = StyleSheet.create({
   levelButton: {
-    flex: 1,
+    flex: 1
   },
   buttonContainer: {
     flex: 1,
-    flexDirection: "column",
+    flexDirection: "column"
   },
   headerText: {
-    height: TILE_WIDTH/2,
-    width: 5*TILE_WIDTH,
+    height: TILE_WIDTH / 2,
+    width: 5 * TILE_WIDTH,
     flexDirection: "row",
-    borderRadius: 10,
+    borderRadius: 10
   },
   buttonRow: {
     flex: 1,
     width: "100%",
-    height:"100%",
+    height: "100%",
     flexDirection: "row"
   },
   buttonImage: {
     width: "100%",
-    height:"100%",
+    height: "100%"
   },
   text: {
     fontSize: TILE_WIDTH / 2.5,
     width: "100%",
     color: "gray",
-    textAlign: "center",
+    textAlign: "center"
   }
 });
 

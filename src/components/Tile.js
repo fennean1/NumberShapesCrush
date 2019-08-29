@@ -1,7 +1,5 @@
 /**
  * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
  */
 
 import React, { Component } from "react";
@@ -15,7 +13,7 @@ import {
   PanResponder,
   Image,
   TouchableWithoutFeedback,
-  TouchableOpacity,
+  TouchableOpacity
 } from "react-native";
 
 let pjb = require("../assets/PinkJellyBean.png");
@@ -27,34 +25,47 @@ let yjb = require("../assets/YellowJellyBean.png");
 let rjb = require("../assets/RedJellyBean.png");
 
 export default class Tile extends Component<{}> {
-
   constructor(props) {
-    super(props)
+    super(props);
 
-    this.state  =  {
+    this.state = {
       highlighted: false
-    }
+    };
   }
 
   onPress() {
-    this.props.onTouch(this.props.indices)
+    this.props.onTouch(this.props.indices);
   }
 
   render() {
-    const tileStyle = this.props.selected ? styles.selectedTile : styles.normalTile
+    const tileStyle = this.props.selected
+      ? styles.selectedTile
+      : styles.normalTile;
 
-    return <Animated.View onStartShouldSetResponder={this.onPress.bind(this)} style={[styles.normalTile,
-          { transform: [{ translateX: this.props.location.x }, { translateY: this.props.location.y }, { scale: this.props.scale}] }
-        ]}>
-<Image style = {tileStyle} source = {this.props.img}/>
-</Animated.View>
-}
+    return (
+      <Animated.View
+        onStartShouldSetResponder={this.onPress.bind(this)}
+        style={[
+          styles.normalTile,
+          {
+            transform: [
+              { translateX: this.props.location.x },
+              { translateY: this.props.location.y },
+              { scale: this.props.scale }
+            ]
+          }
+        ]}
+      >
+        <Image style={tileStyle} source={this.props.img} />
+      </Animated.View>
+    );
+  }
 }
 
 let Window = Dimensions.get("window");
 let windowSpan = Math.min(Window.width, Window.height);
 let TILE_WIDTH = windowSpan / 7;
-let colored = false
+let colored = false;
 
 let styles = StyleSheet.create({
   selectedTile: {
@@ -62,14 +73,14 @@ let styles = StyleSheet.create({
     height: TILE_WIDTH,
     position: "absolute",
     borderRadius: 5,
-    borderColor: "gray",
-    borderWidth: TILE_WIDTH/20
+    borderColor: "#ef1f5d",
+    borderWidth: TILE_WIDTH / 20
   },
   normalTile: {
-      width: TILE_WIDTH,
-      height: TILE_WIDTH,
-      position: "absolute",
-    }
+    width: TILE_WIDTH,
+    height: TILE_WIDTH,
+    position: "absolute"
+  }
 });
 
 module.exports = Tile;

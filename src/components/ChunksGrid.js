@@ -1,5 +1,3 @@
-
-
 import React, { Component } from "react";
 import {
   Platform,
@@ -20,11 +18,33 @@ import GestureRecognizer, {
 
 import SpeedTile from "./SpeedTile";
 
-import {shuffleNumbersWithType, getNumbersWithType, ImageTypes, CardTypes, Types, initVisualCardsWPropsForLevel, initNumCardsWPropsForLevel,getObjectsForCardType,initAllNumbers,getLevel} from "../components/ImageTypes";
+import Tile from "./Tile";
 
-import { getJamJarFromBean, isCandy, getCandyFromBean, isJam } from "../components/JamFunctions";
+import {
+  shuffleNumbersWithType,
+  getNumbersWithType,
+  ImageTypes,
+  CardTypes,
+  Types,
+  NUMERALS,
+  initVisualCardsWPropsForLevel,
+  initNumCardsWPropsForLevel,
+  getObjectsForCardType,
+  initAllNumbers,
+  getLevel,
+  getLevelSeqence
+} from "../components/ImageTypes";
 
-import {NUMBER_SHAPES,initAllNumberShapes} from "../components/ImageTypes";
+import { connect } from "react-redux";
+
+import {
+  getJamJarFromBean,
+  isCandy,
+  getCandyFromBean,
+  isJam
+} from "../components/JamFunctions";
+
+import { NUMBER_SHAPES, initAllNumberShapes } from "../components/ImageTypes";
 
 import {
   getRandomInt,
@@ -36,11 +56,15 @@ import {
   removeAllMatchesWithIndex
 } from "../grid-api/Methods";
 
-
 let boardWidth = 5;
 let boardHeight = 5;
 
 let speed = 300;
+
+const ANIMATION_TYPES = {
+  SWAP: 0,
+  FALL: 1,
+}
 
 class TileData {
   constructor(assetObj, key) {
@@ -49,19 +73,19 @@ class TileData {
     this.value = assetObj.value;
     this.fadeAnimation = new Animated.Value(1);
     this.key = key;
-    this.selected = false
-    this.assetObj = assetObj
+    this.selected = false;
+    this.assetObj = assetObj;
     this.location = new Animated.ValueXY();
-    this.image = assetObj.img
+    this.image = assetObj.img;
     this.rotation = new Animated.Value(0);
     this.scale = new Animated.Value(1);
-    this.explored = false
+    this.explored = false;
   }
 
-  setAsset(obj){
-    this.assetObj = obj
-    this.value = obj.value
-    this.image = obj.img
+  setAsset(obj) {
+    this.assetObj = obj;
+    this.value = obj.value;
+    this.image = obj.img;
   }
 }
 
@@ -75,45 +99,32 @@ const rowOrCol = {
   COLUMN: 1
 };
 
-export default class ChunksGrid extends Component<{}> {
+class ChunksGrid extends Component<{}> {
   constructor(props) {
     super(props);
 
 
+    this.currentLevelIndex = 0;
+    this.firstTurn = true
 
-    // Could use some serious refactoring..like why declare this array?
-    this.myLevels = [Types.BLUE,Types.RED,Types.PURPLE,Types.ORANGE,Types.PINK,Types.GREEN,Types.NUMERAL]
-    this.cardsForThisLevel = getNumbersWithType(this.myLevels[0])
-    this.blueLevel = getNumbersWithType(this.myLevels[0])
-    this.redLevel = getNumbersWithType(this.myLevels[1])
-    this.purpleLevel = getNumbersWithType(this.myLevels[2])
-    this.orangeLevel = getNumbersWithType(this.myLevels[3])
-    this.pinkLevel = getNumbersWithType(this.myLevels[4])
-    this.greenLevel = getNumbersWithType(this.myLevels[5])
-    this.numeralLevel = getNumbersWithType(this.myLevels[6])
-
-    this.upperBound = 7
-    this.lowerBound = 3
-    this.cardCue = [...this.redLevel.slice(this.lowerBound,this.upperBound),...this.purpleLevel.slice(this.lowerBound,this.upperBound),...this.orangeLevel.slice(this.lowerBound,this.upperBound),...this.pinkLevel.slice(this.lowerBound,this.upperBound),...this.greenLevel.slice(this.lowerBound,this.upperBound),...this.numeralLevel.slice(this.lowerBound,this.upperBound)]
-    this.currentLevelIndex = 0
     // Inititalize to swipe up, will change later.
     this.swipeDirection = swipeDirections.SWIPE_UP;
-    this.isCandy = false
-    this.currentIJ = {}
-    this.nextIJ = {}
-    this.crunchThisImage = ImageTypes.REDJELLYBEAN
-    this.crunchTheseIfCandy = new Array([[0,0]]);
+    this.isCandy = false;
+    this.currentIJ = {};
+    this.nextIJ = {};
+    this.crunchThisImage = ImageTypes.REDJELLYBEAN;
+    this.crunchTheseIfCandy = new Array([[0, 0]]);
 
     // NOTE New Variables for new game:
-    this.numberOfSelected = 0
-    this.selectedIndexes = []
-    this.jar = null
-    this.firstLoad = true
+    this.numberOfSelected = 0;
+    this.selectedIndexes = [];
+    this.jar = null;
+    this.firstLoad = true;
 
     // Speed of the animations
     this.speed = 100; // Rate at which the animation occurs.
     this.origin = [];
-    this.animationState = animationType.SWAP;
+    this.animationState = ANIMATION_TYPES.FALL
     this.currentDirection = rowOrCol.ROW;
     this.otherDirection = rowOrCol.COLUMN;
     this.cancelTouches = false;
@@ -121,7 +132,7 @@ export default class ChunksGrid extends Component<{}> {
 
     this.previousSwappedIndexes = [];
     this.shouldReimburseForSwap = true;
-    this.numbersFound = []
+    this.numbersFound = [];
 
     this.state = {
       tileComponents: [],
@@ -129,46 +140,69 @@ export default class ChunksGrid extends Component<{}> {
     };
   }
 
-  validIndex(i,j) {
-    if (i < 0 || i > 4 || j < 0 || j > 4){
-      return false
+  validIndex(i, j) {
+    if (i < 0 || i > 4 || j < 0 || j > 4) {
+      return false;
     } else {
-      return true
+      return true;
     }
   }
 
-  exploreAndTag(i,j) {
-
-    let value = this.state.tileDataSource[i][j].assetObj.value
-    this.state.tileDataSource[i][j].explored = true
-
-    let rightImage = this.validIndex(i+1,j) ? this.state.tileDataSource[i+1][j].assetObj.value : null
-    let leftImage = this.validIndex(i-1,j) ? this.state.tileDataSource[i-1][j].assetObj.value : null
-    let topImage = this.validIndex(i,j-1) ? this.state.tileDataSource[i][j-1].assetObj.value : null
-    let bottomImage = this.validIndex(i,j+1) ? this.state.tileDataSource[i][j+1].assetObj.value : null
-
-    if (rightImage == value && this.state.tileDataSource[i+1][j].explored == false) {
-        this.exploreAndTag(i+1,j)
-    }
-
-    if (leftImage == value && this.state.tileDataSource[i-1][j].explored == false) {
-        this.exploreAndTag(i-1,j)
-    }
-
-    if (topImage == value && this.state.tileDataSource[i][j-1].explored == false) {
-        this.exploreAndTag(i,j-1)
-    }
-
-    if (bottomImage == value  && this.state.tileDataSource[i][j+1].explored == false) {
-        this.exploreAndTag(i,j+1)
-    }
-
+  setShit(){
+    this.props.dispatch({
+      type: "ADD_ITEM",
+      name: "poop"
+    });
   }
 
+  exploreAndTag(i, j) {
+    let value = this.state.tileDataSource[i][j].assetObj.value;
+    this.state.tileDataSource[i][j].explored = true;
 
+    let rightImage = this.validIndex(i + 1, j)
+      ? this.state.tileDataSource[i + 1][j].assetObj.value
+      : null;
+    let leftImage = this.validIndex(i - 1, j)
+      ? this.state.tileDataSource[i - 1][j].assetObj.value
+      : null;
+    let topImage = this.validIndex(i, j - 1)
+      ? this.state.tileDataSource[i][j - 1].assetObj.value
+      : null;
+    let bottomImage = this.validIndex(i, j + 1)
+      ? this.state.tileDataSource[i][j + 1].assetObj.value
+      : null;
+
+    if (
+      rightImage == value &&
+      this.state.tileDataSource[i + 1][j].explored == false
+    ) {
+      this.exploreAndTag(i + 1, j);
+    }
+
+    if (
+      leftImage == value &&
+      this.state.tileDataSource[i - 1][j].explored == false
+    ) {
+      this.exploreAndTag(i - 1, j);
+    }
+
+    if (
+      topImage == value &&
+      this.state.tileDataSource[i][j - 1].explored == false
+    ) {
+      this.exploreAndTag(i, j - 1);
+    }
+
+    if (
+      bottomImage == value &&
+      this.state.tileDataSource[i][j + 1].explored == false
+    ) {
+      this.exploreAndTag(i, j + 1);
+    }
+  }
 
   onSwipe(gestureName, gestureState) {
-
+    this.animationState = ANIMATION_TYPES.SWAP
     if (this.cancelTouches == false && this.props.gameOver == false) {
       let initialGestureX = gestureState.x0;
       let initialGestureY = gestureState.y0;
@@ -185,12 +219,13 @@ export default class ChunksGrid extends Component<{}> {
       );
 
       const { SWIPE_UP, SWIPE_DOWN, SWIPE_LEFT, SWIPE_RIGHT } = swipeDirections;
-      this.setState({ gestureName: gestureName });
+      this.setState({
+        gestureName: gestureName
+      });
 
       //  TODO: Make sure that the boundary conditions 0 and 4 aren't HARDCODED
       switch (gestureName) {
         case SWIPE_UP:
-
           if (j > 0) {
             this.swipeDirection = SWIPE_UP;
             this.swap(i, j, 0, -1);
@@ -198,7 +233,6 @@ export default class ChunksGrid extends Component<{}> {
 
           break;
         case SWIPE_DOWN:
-
           if (j < 4) {
             this.swipeDirection = SWIPE_DOWN;
             this.swap(i, j, 0, 1);
@@ -206,7 +240,6 @@ export default class ChunksGrid extends Component<{}> {
 
           break;
         case SWIPE_LEFT:
-
           if (i > 0) {
             this.swipeDirection = SWIPE_LEFT;
             this.swap(i, j, -1, 0);
@@ -214,7 +247,6 @@ export default class ChunksGrid extends Component<{}> {
 
           break;
         case SWIPE_RIGHT:
-
           if (i < 4) {
             this.swipeDirection = SWIPE_RIGHT;
             this.swap(i, j, 1, 0);
@@ -225,31 +257,38 @@ export default class ChunksGrid extends Component<{}> {
   }
 
   componentDidUpdate() {
-    this.animateValuesToLocationsWaterfalStyle()
+    this.animateValuesToLocations();
   }
 
   // data - the array of
   renderTiles() {
     if (this.firstLoad) {
-      this.firstLoad = false
-      this.lowerBound = this.props.currentLevel
-      this.upperBound = this.props.currentLevel + 4
-      this.cardCue = [...this.blueLevel.slice(this.lowerBound,this.upperBound),...this.redLevel.slice(this.lowerBound,this.upperBound),...this.purpleLevel.slice(this.lowerBound,this.upperBound),...this.orangeLevel.slice(this.lowerBound,this.upperBound),...this.pinkLevel.slice(this.lowerBound,this.upperBound),...this.greenLevel.slice(this.lowerBound,this.upperBound)]
-      this.state.tileDataSource = this.initializeDataSource()
+      let levels = [[0,4],[1,5],[3,7],[6,10]]
+      let min = levels[this.props.currentLevel-1][0]
+      let max = levels[this.props.currentLevel-1][1]
+      // console.log("current Level", this.props.currentLevel);
+      this.firstLoad = false;
+      this.visualCardsWithProps = getLevelSeqence();
+      this.visualCardsWithProps = this.visualCardsWithProps.filter(
+        e =>
+          e.value <= max &&
+          e.value >= min
+      );
+      this.state.tileDataSource = this.initializeDataSource();
       var components = [];
       // This creates the array of Tile components that is stored as a state variable.
       this.state.tileDataSource.map((row, i) => {
         let rows = row.map((e, j) => {
           components.push(
             <SpeedTile
-            location={e.location}
-            scale={e.scale}
-            key={e.key}
-            rotation={e.rotation}
-            img={e.assetObj.img}
-            onTouch = {this.onTouch.bind(this)}
-            indices = {[i,j]}
-            selected = {e.selected}
+              location={e.location}
+              scale={e.scale}
+              key={e.key}
+              rotation={e.rotation}
+              img={e.assetObj.img}
+              onTouch={this.onTouch.bind(this)}
+              indices={[i, j]}
+              selected={e.selected}
             />
           );
         });
@@ -258,33 +297,32 @@ export default class ChunksGrid extends Component<{}> {
       });
       return components;
     } else {
-    var components = [];
-    // This creates the array of Tile components that is stored as a state variable.
-    this.state.tileDataSource.map((row, i) => {
-      let rows = row.map((e, j) => {
-        components.push(
-          <SpeedTile
-          location={e.location}
-          scale={e.scale}
-          key={e.key}
-          rotation={e.rotation}
-          img={e.assetObj.img}
-          onTouch = {this.onTouch.bind(this)}
-          indices = {[i,j]}
-          selected = {e.selected}
-          />
-        );
+      var components = [];
+      // This creates the array of Tile components that is stored as a state variable.
+      this.state.tileDataSource.map((row, i) => {
+        let rows = row.map((e, j) => {
+          components.push(
+            <SpeedTile
+              location={e.location}
+              scale={e.scale}
+              key={e.key}
+              rotation={e.rotation}
+              img={e.assetObj.img}
+              onTouch={this.onTouch.bind(this)}
+              indices={[i, j]}
+              selected={e.selected}
+            />
+          );
+        });
+        return;
+        rows;
       });
-      return;
-      rows;
-    });
-    return components;
-  }
+      return components;
+    }
   }
 
   // takes the indexes that will be animated
   animateCandyCrunch(indexesToAnimate) {
-
     let len = indexesToAnimate.length;
 
     for (var n = 0; n < len; n++) {
@@ -304,16 +342,15 @@ export default class ChunksGrid extends Component<{}> {
           toValue: 0,
           duration: 150,
           useNativeDriver: true
-        }),
+        })
       ]).start(() => {
         this.animationState = animationType.FALL;
       });
     }
   }
 
-
   // takes the indexes that will be animated and
-  animateBeanMatch(indexesToAnimate,location,jar) {
+  animateBeanMatch(indexesToAnimate, location, jar) {
     let locationToAnimateTo = [
       location[0] * TILE_WIDTH,
       location[1] * TILE_WIDTH
@@ -340,7 +377,10 @@ export default class ChunksGrid extends Component<{}> {
           useNativeDriver: true
         }),
         Animated.timing(this.state.tileDataSource[i][j].location, {
-          toValue: { x: locationToAnimateTo[0], y: locationToAnimateTo[1] },
+          toValue: {
+            x: locationToAnimateTo[0],
+            y: locationToAnimateTo[1]
+          },
           duration: this.speed,
           useNativeDriver: true
         })
@@ -351,9 +391,8 @@ export default class ChunksGrid extends Component<{}> {
     }
   }
 
-
   // takes the indexes that will be animated and
-  animateNumberMatch(indexesToAnimate,location) {
+  animateNumberMatch(indexesToAnimate, location) {
     let locationToAnimateTo = [
       location[0] * TILE_WIDTH,
       location[1] * TILE_WIDTH
@@ -380,7 +419,10 @@ export default class ChunksGrid extends Component<{}> {
           useNativeDriver: true
         }),
         Animated.timing(this.state.tileDataSource[i][j].location, {
-          toValue: { x: locationToAnimateTo[0], y: locationToAnimateTo[1] },
+          toValue: {
+            x: locationToAnimateTo[0],
+            y: locationToAnimateTo[1]
+          },
           duration: this.speed,
           useNativeDriver: true
         })
@@ -389,7 +431,6 @@ export default class ChunksGrid extends Component<{}> {
       });
     }
   }
-
 
   sharedIndex(arrOne, arrTwo) {
     let match = [];
@@ -438,8 +479,8 @@ export default class ChunksGrid extends Component<{}> {
     let swipeBeganAt = [i, j];
     let swipeDirectedAt = [i + dx, j + dy];
 
-    this.currentIJ = swipeBeganAt
-    this.nextIJ = swipeDirectedAt
+    this.currentIJ = swipeBeganAt;
+    this.nextIJ = swipeDirectedAt;
 
     if (
       this.containsIndexPair(this.previousSwappedIndexes, swipeBeganAt) &&
@@ -450,12 +491,11 @@ export default class ChunksGrid extends Component<{}> {
 
       let inc = Math.pow(-1, this.consecutiveSwaps);
       console.log("increment", inc);
-      this.props.incrementTurns(inc);
-
+      //this.props.incrementTurns(inc);
     } else {
       console.log("Don't need to give swap back");
-      this.consecutiveSwaps = 1
-      this.props.incrementTurns(-1);
+      this.consecutiveSwaps = 1;
+      //this.props.incrementTurns(-1);
     }
 
     // Log the previous indexes
@@ -466,38 +506,11 @@ export default class ChunksGrid extends Component<{}> {
     const swapStarter = this.state.tileDataSource[i][j];
     const swapEnder = this.state.tileDataSource[i + dx][j + dy];
 
-
-        Animated.parallel([
-          Animated.timing(swapStarter.location, {
-            toValue: {x: TILE_WIDTH*(i+dx),y: TILE_WIDTH*(j+dy)},
-            duration: 120,
-            useNativeDriver: true
-          }),
-          Animated.timing(swapEnder.location, {
-            toValue: {x: TILE_WIDTH*i,y: TILE_WIDTH*j},
-            duration: 120,
-            useNativeDriver: true
-          }),
-        ]).start()
-
-
-    /* NOTE Collect Swap metadata to determine how to manage the candy (now RainbowBean)
-    if (this.isCandy = isCandy(swapStarter.imageType)){
-      this.crunchThisImage = swapEnder.imageType
-      this.crunchTheseIfCandy = this.getIndexesWithColor(this.crunchThisImage)
-      this.crunchTheseIfCandy.push(this.currentIJ)
-    } else if (this.isCandy = isCandy(swapEnder.imageType)){
-      this.crunchThisImage = swapStarter.imageType
-      this.crunchTheseIfCandy = this.getIndexesWithColor(this.crunchThisImage)
-      this.crunchTheseIfCandy.push(this.nextIJ)
-    }
-    */
-
     // Perform the swap - this calls "Component did update" - I think.
     newData[i][j] = swapEnder;
     newData[i + dx][j + dy] = swapStarter;
 
-    this.updateGrid();
+    //this.updateGrid();
   }
 
   // Handles swipe events
@@ -509,43 +522,42 @@ export default class ChunksGrid extends Component<{}> {
     let allMatches = this.allMatchesOnBoard();
 
     // CANDY MEANS RAINBOW BEAN!
-    if (this.isCandy){
-        this.cancelTouches = true
+    if (this.isCandy) {
+      this.cancelTouches = true;
 
-        if (isJam(this.crunchThisImage)){
-          jamThisTurn = this.crunchTheseIfCandy.length  // crunchTheseIfCandy contains
-          // the index of the rainbow bean so we have to subtract one.
-          this.props.incrementTurns(jamThisTurn);
-        } else {
-          beansThisTurn = (this.crunchTheseIfCandy.length-1)*5
-          this.props.incrementTurns(1)
-        }
+      if (isJam(this.crunchThisImage)) {
+        jamThisTurn = this.crunchTheseIfCandy.length; // crunchTheseIfCandy contains
+        // the index of the rainbow bean so we have to subtract one.
+        //this.props.incrementTurns(jamThisTurn);
+      } else {
+        beansThisTurn = (this.crunchTheseIfCandy.length - 1) * 5;
+        //this.props.incrementTurns(1);
+      }
 
-        this.props.updateScore(beansThisTurn,3*jamThisTurn)
+      this.props.updateScore(beansThisTurn, 3 * jamThisTurn);
 
-        this.animateCandyCrunch(this.crunchTheseIfCandy)
+      this.animateCandyCrunch(this.crunchTheseIfCandy);
 
-        setTimeout(()=> {
-          this.recolorMatches(this.crunchTheseIfCandy)
-          this.condenseColumns(this.crunchTheseIfCandy)
-          this.setState({tileDataSource: this.state.tileDataSource})
-          this.animateValuesToLocationsWaterfalStyle()
-          this.animationState = animationType.SWAP
+      setTimeout(() => {
+        this.recolorMatches(this.crunchTheseIfCandy);
+        this.condenseColumns(this.crunchTheseIfCandy);
+        this.setState({
+          tileDataSource: this.state.tileDataSource
+        });
+        this.animateValuesToLocationsWaterfalStyle();
+        this.animationState = animationType.SWAP;
 
         setTimeout(() => {
           if (this.allMatchesOnBoard().length != 0) {
-            this.isCandy = false
+            this.isCandy = false;
             this.updateGrid();
           } else {
             this.cancelTouches = false;
             this.animationState = animationType.SWAP;
           }
         }, 1200);
-
-      },1200)
-
-    }
-    else if (allMatches.length != 0) {
+      }, 1200);
+    } else if (allMatches.length != 0) {
       this.cancelTouches = true;
       // Previousy swapped indexes stores the indexes that were most
       // recently swapped to determine if turn reimbursement
@@ -553,12 +565,9 @@ export default class ChunksGrid extends Component<{}> {
       this.previousSwappedIndexes = [];
       let duplicates = this.returnDuplicates(allMatches);
 
-
       // These are the indexes that were matched and need to be replaced with new beans
       let indexesToRemove = [];
       if (duplicates.length == 1) {
-
-
         const withSharedIndexes = duplicates.map(e => {
           let allWithIndex = returnAllMatchesWithIndex(allMatches, e);
           if (allWithIndex.length > 0) {
@@ -577,7 +586,6 @@ export default class ChunksGrid extends Component<{}> {
           }
         });
 
-
         withSharedIndexes.map((row, i) => {
           // This reduces the beans this turn by one to account for the shared index being counted twice
           beansThisTurn = beansThisTurn - withSharedIndexes.length;
@@ -588,7 +596,7 @@ export default class ChunksGrid extends Component<{}> {
             // Get the indexs of the first item
             let i = match[0][0];
             let j = match[0][1];
-            let currentObject = this.state.tileDataSource[i][j].assetObj
+            let currentObject = this.state.tileDataSource[i][j].assetObj;
             let currentImage = this.state.tileDataSource[i][j].imageType;
 
             if (currentObject.type == CardTypes.num) {
@@ -596,60 +604,55 @@ export default class ChunksGrid extends Component<{}> {
               // NOTE replace the above line with a seperate animate function for when we make a match of numbers.
               jamThisTurn += match.length;
             } else {
-              this.animateBeanMatch(match, animateTo,currentObject.numeral);
+              this.animateBeanMatch(match, animateTo, currentObject.numeral);
               beansThisTurn += match.length;
               indexesToRemove.push(animateTo);
             }
           });
-
-
         });
 
         // Check to see if the first match in the set of those withoutSharedIndexes is zero.
-        if (withoutSharedIndexes[0].length != 0){
+        if (withoutSharedIndexes[0].length != 0) {
+          withoutSharedIndexes.map((row, i) => {
+            // This reduces the beans this turn by one to account for the shared index being counted twice
+            beansThisTurn = beansThisTurn - withSharedIndexes.length;
+            // Animate to the index that they share
+            let animateTo = row[0][0];
+            console.log("animateTo in withoutSharedIndexes", animateTo);
 
-        withoutSharedIndexes.map((row, i) => {
-          // This reduces the beans this turn by one to account for the shared index being counted twice
-          beansThisTurn = beansThisTurn - withSharedIndexes.length;
-          // Animate to the index that they share
-          let animateTo = row[0][0]
-          console.log("animateTo in withoutSharedIndexes",animateTo)
+            row.map(match => {
+              // Get the indexs of the first item
+              let i = match[0][0];
+              let j = match[0][1];
+              let currentAsset = this.state.tileDataSource[i][j].assetObj;
 
-          row.map(match => {
-            // Get the indexs of the first item
-            let i = match[0][0];
-            let j = match[0][1];
-            let currentAsset = this.state.tileDataSource[i][j].assetObj;
-
-            this.animateBeanMatch(match, animateTo,currentAsset.numeral);
-            beansThisTurn += match.length;
-            indexesToRemove.push(animateTo);
+              this.animateBeanMatch(match, animateTo, currentAsset.numeral);
+              beansThisTurn += match.length;
+              indexesToRemove.push(animateTo);
+            });
           });
-        });
-}
-
+        }
       } else {
         allMatches.map(match => {
-
           let u = match[0][0];
           let v = match[0][1];
-          let currentAsset = this.state.tileDataSource[u][v].assetObj
+          let currentAsset = this.state.tileDataSource[u][v].assetObj;
 
           // Retreive first index in match
           if (this.allAreNumbers(match)) {
             this.animateNumberMatch(match, [2, -8]);
-            this.props.incrementTurns(4)
+            //this.props.incrementTurns(4);
             jamThisTurn += match.length;
           } else {
             // Give them candy if the match is greater than 3.
             if (match.length > 3) {
-               this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
+              this.state.tileDataSource[u][v].setAsset(currentAsset.numeral);
             } else {
-                //this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
+              //this.state.tileDataSource[u][v].setAsset(currentAsset.numeral)
             }
-            this.jar = currentAsset.numeral
+            this.jar = currentAsset.numeral;
             // This completion handler for animated bean match will set the asset.
-            this.animateBeanMatch(match, match[0],currentAsset.numeral);
+            this.animateBeanMatch(match, match[0], currentAsset.numeral);
             beansThisTurn += match.length;
             indexesToRemove.push(match[0]);
           }
@@ -658,10 +661,10 @@ export default class ChunksGrid extends Component<{}> {
 
       // Everytime you get jam match you get extra turns.
       if (jamThisTurn > 0) {
-        this.props.incrementTurns(2*(jamThisTurn-2));
+        //this.props.incrementTurns(2 * (jamThisTurn - 2));
       }
 
-      this.props.updateScore(beansThisTurn, 3*jamThisTurn);
+      this.props.updateScore(beansThisTurn, 3 * jamThisTurn);
 
       // TODO: Flatten all matches before...wait...what about duplicate indexes?
       // Duplicate indexes will never need removal!!!!!
@@ -671,13 +674,14 @@ export default class ChunksGrid extends Component<{}> {
 
       // Waits for "animate match" to complete.
       setTimeout(() => {
-
         allMatches.map(match => {
           this.recolorMatches(match);
           this.condenseColumns(match);
         });
-        this.setState({tileDataSource: this.state.tileDataSource})
-        this.animateValuesToLocationsWaterfalStyle()
+        this.setState({
+          tileDataSource: this.state.tileDataSource
+        });
+        this.animateValuesToLocationsWaterfalStyle();
 
         setTimeout(() => {
           if (this.allMatchesOnBoard().length != 0) {
@@ -690,10 +694,7 @@ export default class ChunksGrid extends Component<{}> {
         }, 1200);
       }, 1200);
     }
-
   }
-
-
 
   initializeDataSource() {
     // Grid that contains the keys that will be assigned to each tile via map
@@ -707,9 +708,9 @@ export default class ChunksGrid extends Component<{}> {
 
     var tileData = keys.map((row, i) => {
       let dataRows = row.map((key, j) => {
-        let rand = getRandomInt(this.cardCue.length)
-        let newAsset = this.cardCue[rand]
-        let data = new TileData(newAsset,key);
+        //let rand = getRandomInt(this.cardCue.length);
+        let newAsset = this.visualCardsWithProps.shift();
+        let data = new TileData(newAsset, key);
         return data;
       });
       return dataRows;
@@ -722,20 +723,40 @@ export default class ChunksGrid extends Component<{}> {
     console.log("this is the origin", this.origin);
   }
 
+  getNumberOfTypes(match) {
+    let types = {};
+    this.state.tileDataSource.forEach((r, i) => {
+      r.forEach((e, j) => {
+        let type = e.assetObj.type;
+        console.log("type", type);
+        let exploredState = e.explored;
+        console.log("explored state", exploredState);
+        if (exploredState) {
+          console.log("typs.type", types[type]);
+          if (types[type]) {
+            console.log("skipping over");
+          } else {
+            console.log("Assigning value");
+            types[type] = 1;
+          }
+        }
+      });
+    });
+    return Object.keys(types).length;
+  }
 
   isMatch(itemOne, itemTwo) {
-
-    let bothNums = (itemOne.type == CardTypes.num) && (itemTwo.type == CardTypes.num)
-    let atLeastOneIsNum = (itemOne.type == CardTypes.num) || (itemTwo.type == CardTypes.num)
-    let onlyOneIsNum = !bothNums && atLeastOneIsNum
-
+    let bothNums =
+      itemOne.type == CardTypes.num && itemTwo.type == CardTypes.num;
+    let atLeastOneIsNum =
+      itemOne.type == CardTypes.num || itemTwo.type == CardTypes.num;
+    let onlyOneIsNum = !bothNums && atLeastOneIsNum;
 
     if (itemOne.value == itemTwo.value) {
       return true;
     } else {
-      return false
+      return false;
     }
-
   }
 
   checkRowColForMatch(coordinate, direction) {
@@ -876,15 +897,99 @@ export default class ChunksGrid extends Component<{}> {
 
   // Animates the values in the tile data source based on their index in the array.
   animateValuesToLocationsSwapStyle() {
-    this.state.tileDataSource.map((row, i) => {
-      row.map((elem, j) => {
-        Animated.spring(elem.location, {
-          toValue: { x: TILE_WIDTH * i, y: TILE_WIDTH * j },
-          friction: 4,
-          useNativeDriver: true
-        }).start();
-      });
-    });
+    console.log("Animation State",this.animationState)
+    switch(this.animationState){
+      case ANIMATION_TYPES.FALL:
+          this.state.tileDataSource.map((row, i) => {
+            row.map((elem, j) => {
+              Animated.spring(elem.location, {
+                toValue: {
+                  x: TILE_WIDTH * i,
+                  y: TILE_WIDTH * j
+                },
+                friction: 4,
+                useNativeDriver: true
+              }).start();
+            });
+          });
+      case ANIMATION_TYPES.SWAP:
+          this.state.tileDataSource.map((row, i) => {
+            row.map((elem, j) => {
+              Animated.timing(elem.location, {
+                toValue: {
+                  x: TILE_WIDTH * i,
+                  y: TILE_WIDTH * j
+                },
+                friction: 4,
+                useNativeDriver: true
+              }).start();
+            });
+          });
+        default:
+            this.state.tileDataSource.map((row, i) => {
+              row.map((elem, j) => {
+                Animated.spring(elem.location, {
+                  toValue: {
+                    x: TILE_WIDTH * i,
+                    y: TILE_WIDTH * j
+                  },
+                  friction: 4,
+                  useNativeDriver: true
+                }).start();
+              });
+            });
+    }
+
+  }
+
+  animateValuesToLocations() {
+    console.log("this.animationState",this.animationState)
+    switch(this.animationState){
+      case ANIMATION_TYPES.FALL:
+          console.log("falling")
+          this.state.tileDataSource.map((row, i) => {
+            row.map((elem, j) => {
+              Animated.spring(elem.location, {
+                toValue: {
+                  x: TILE_WIDTH * i,
+                  y: TILE_WIDTH * j
+                },
+                friction: 4,
+                useNativeDriver: true
+              }).start();
+            });
+          });
+          break;
+      case ANIMATION_TYPES.SWAP:
+        console.log("Swapping")
+          this.state.tileDataSource.map((row, i) => {
+            row.map((elem, j) => {
+              Animated.timing(elem.location, {
+                toValue: {
+                  x: TILE_WIDTH * i,
+                  y: TILE_WIDTH * j
+                },
+                duration: 150,
+                useNativeDriver: true
+              }).start();
+            });
+          });
+          break;
+        default:
+          console.log("Default")
+            this.state.tileDataSource.map((row, i) => {
+              row.map((elem, j) => {
+                Animated.spring(elem.location, {
+                  toValue: {
+                    x: TILE_WIDTH * i,
+                    y: TILE_WIDTH * j
+                  },
+                  friction: 4,
+                  useNativeDriver: true
+                }).start();
+              });
+            });
+    }
   }
 
   // Animates the values in the tile data source based on their index in the array.
@@ -895,7 +1000,14 @@ export default class ChunksGrid extends Component<{}> {
           Animated.spring(
             //Step 1
             elem.location, //Step 2
-            { toValue: { x: TILE_WIDTH * i, y: TILE_WIDTH * j }, friction: 4, useNativeDriver: true } //Step 3
+            {
+              toValue: {
+                x: TILE_WIDTH * i,
+                y: TILE_WIDTH * j
+              },
+              friction: 4,
+              useNativeDriver: true
+            } //Step 3
           )
         ]).start(() => {});
       });
@@ -905,7 +1017,6 @@ export default class ChunksGrid extends Component<{}> {
   // Weird name
 
   condenseColumns(newData) {
-
     let spotsToFill = 0;
 
     // NOTE: HARDCODED!
@@ -927,112 +1038,152 @@ export default class ChunksGrid extends Component<{}> {
 
           newData[i][j] = newSpot;
           newData[i][j + spotsToFill] = currentSpot;
-
         }
       }
     }
   }
 
-
   recolorMatches(tileData) {
     tileData.map(row => {
       row.map(e => {
-            if (e.explored == true) {
-            let rand = getRandomInt(this.cardCue.length)
-            let newAsset = this.cardCue[rand]
-            e.assetObj = newAsset
-            e.selected = false
-            e.scale.setValue(1)
-            e.explored = false
-          }
-        })
+        if (e.explored == true) {
+          //let rand = getRandomInt(this.cardCue.length);
+          let newAsset = this.visualCardsWithProps.shift();
+          e.assetObj = newAsset;
+          e.selected = false;
+          e.scale.setValue(1);
+          e.explored = false;
+        }
+      });
     });
   }
 
-
   onTouch(indices) {
-      let i = indices[0]
-      let j = indices[1]
+    this.animationState = ANIMATION_TYPES.FALL
+    this.consecutiveSwaps = 1
+    this.previousSwappedIndexes = []
+    let i = indices[0];
+    let j = indices[1];
 
-      let value = this.state.tileDataSource[i][j].assetObj.value
-      let animateTo = [i*TILE_WIDTH,j*TILE_WIDTH]
-      this.state.tileDataSource[i][j].explored = true
-      this.exploreAndTag(i,j)
-      console.log("animateTo X AND Y",animateTo)
-      //this.state.tileDataSource[i][j].explored = false
-      this.state.tileDataSource[i][j].assetObj =  this.state.tileDataSource[i][j].assetObj.numeral
+    let value = this.state.tileDataSource[i][j].assetObj.value;
+    let animateTo = [i * TILE_WIDTH, j * TILE_WIDTH];
+    this.state.tileDataSource[i][j].explored = true;
+    this.exploreAndTag(i, j);
+    let numberOfTypes = this.getNumberOfTypes();
+    //console.log("numberoftypes",turnInc)
+    if (numberOfTypes > 2) {
+      this.props.incrementTurns(1);
+    } else if (numberOfTypes < 2) {
+      if (!this.firstTurn) {this.props.incrementTurns(-1)};
+    } 
+    this.firstTurn = false
 
-      this.state.tileDataSource.forEach(row => {
-        row.forEach(e => {
-           if (e.explored){
-                console.log("BALLLLLLS")
-                e.assetObj = e.assetObj.numeral}})
-})
+    console.log("animateTo X AND Y", animateTo);
+    //this.state.tileDataSource[i][j].explored = false
+    this.state.tileDataSource[i][j].assetObj = this.state.tileDataSource[i][
+      j
+    ].assetObj.numeral;
 
-      this.setState({tileDataSource: this.state.tileDataSource})
+    this.state.tileDataSource.forEach(row => {
+      row.forEach(e => {
+        if (e.explored) {
+          e.assetObj = e.assetObj.numeral;
+        }
+      });
+    });
 
-      let quantity = 0
-      this.state.tileDataSource.forEach((row,i) => {
-        row.forEach((e,j) => {
-          if (e.explored == true){
-                quantity += 1
-                Animated.sequence([
-                  Animated.timing(e.scale, {
-                    toValue: 1.2,
-                    duration: 250,
-                    useNativeDriver: true
-                  }),
-                Animated.timing(e.scale, {
-                  toValue: 0,
-                  duration: 250,
-                  useNativeDriver: true
-                }),
-              ]).start(() => {
-                console.log("c.numeral",e)
-                e.location.setValue({x: TILE_WIDTH*i,y: -4*TILE_WIDTH})})
-           }
-        })})
 
-        setTimeout(() => {
-          this.props.updateScore({value: value,quantity: quantity,turnOver: false,gameOver: false})
-          this.condenseColumns(this.state.tileDataSource)
-          this.recolorMatches(this.state.tileDataSource)
-          this.setState({tileDataSource: this.state.tileDataSource})
-      },510)
+    // Call component did update
+    this.setState({
+      tileDataSource: this.state.tileDataSource
+    });
 
+    let quantity = 0;
+    this.state.tileDataSource.forEach((row, i) => {
+      row.forEach((e, j) => {
+        if (e.explored == true) {
+          quantity += 1;
+          Animated.sequence([
+            Animated.timing(e.scale, {
+              toValue: 1.2,
+              duration: 250,
+              useNativeDriver: true
+            }),
+            Animated.timing(e.scale, {
+              toValue: 0,
+              duration: 250,
+              useNativeDriver: true
+            })
+          ]).start(() => {
+            console.log("c.numeral", e);
+            e.location.setValue({
+              x: TILE_WIDTH * i,
+              y: -4 * TILE_WIDTH
+            });
+          });
+        }
+      });
+    });
+
+    console.log("this.visualCardsWithProps.length",this.visualCardsWithProps.length)
+    let allAreNumbers = true
+    this.state.tileDataSource.forEach(row=> {
+      row.forEach(e=> {
+          if (e.assetObj.type != Types.NUMERAL) {
+            allAreNumbers = false
+          }
+        }
+      )})
+    let endGame = allAreNumbers
+
+    setTimeout(() => {
+      this.props.popTrophy(quantity*quantity*value)
+      this.props.updateScore({
+        value: value,
+        quantity: quantity*quantity*numberOfTypes,
+        turnOver: false,
+        gameOver: endGame
+      });
+      this.condenseColumns(this.state.tileDataSource);
+      this.recolorMatches(this.state.tileDataSource);
+      this.setState({
+        tileDataSource: this.state.tileDataSource
+      });
+    }, 510);
   }
 
 
-resetGrid(){
-    this.cardsForThisLevel = shuffleNumbersWithType(this.myLevels[this.currentLevelIndex])
-    this.cardCue = [...this.cardsForThisLevel,...this.cardsForThisLevel,...this.cardsForThisLevel]
-    this.setState({tileDataSource: this.initializeDataSource()})
-    this.numbersFound = []
-    this.animateValuesToLocationsWaterfalStyle()
-}
 
-
-allAreNumbers(match){
-  let areNumbers = true
-  if (match.length == 0){
-    return false
-  }
-  match.map(e => {
-    if (this.state.tileDataSource[e[0]][e[1]].assetObj.type != CardTypes.num){
-      areNumbers = false
+  allAreNumbers(match) {
+    let areNumbers = true;
+    if (match.length == 0) {
+      return false;
     }
-  })
-  return areNumbers
-}
+    match.map(e => {
+      if (
+        this.state.tileDataSource[e[0]][e[1]].assetObj.type != CardTypes.num
+      ) {
+        areNumbers = false;
+      }
+    });
+    return areNumbers;
+  }
 
   render() {
+    const config = {
+      velocityThreshold: 0.11,
+      directionalOffsetThreshold: 50,
+      gestureIsClickThreshold: 5
+    };
     return (
-      <View
-       onLayout={this.onLayout.bind(this)}
+      <GestureRecognizer
+        onLayout={this.onLayout.bind(this)}
+        config={config}
         style={styles.gestureContainer}
+        onSwipe={(direction, state) => this.onSwipe(direction, state)}
       >
         {this.props.currentLevel != null && this.renderTiles()}
-      </View>
+      </GestureRecognizer>
     );
   }
 }
@@ -1075,18 +1226,20 @@ let styles = StyleSheet.create({
     flex: 1,
     width: TILE_WIDTH * 5,
     height: TILE_WIDTH * 5,
-    position: "absolute",
+    position: "absolute"
     //backgroundColor: "#31a51a"
   },
   container: {
     width: TILE_WIDTH * 5,
-    height: TILE_WIDTH * 5,
+    height: TILE_WIDTH * 5
     //backgroundColor: 'white',
     //backgroundColor: red
   },
   tile: {
-    width: 0.9*TILE_WIDTH,
-    height: 0.9*TILE_WIDTH,
-    borderRadius: 10,
+    width: 0.9 * TILE_WIDTH,
+    height: 0.9 * TILE_WIDTH,
+    borderRadius: 10
   }
 });
+
+export default connect()(ChunksGrid)
